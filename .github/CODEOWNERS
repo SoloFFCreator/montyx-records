@@ -1,0 +1,3 @@
+# Release coordinator; assign an independent collaborator to review author changes.
+# This file routes reviews; repository settings control whether approval is required.
+* @hetaoBackend

@@ -1,0 +1,48 @@
+name: Feature request
+description: Suggest an improvement to the Desktop app, CLI, or source distribution.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: product
+    attributes:
+      label: Product or interface
+      options:
+        - Desktop app
+        - CLI - interactive TUI
+        - CLI - headless
+        - CLI - ACP
+        - Source build or repository tooling
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Use case and problem
+      description: What are you trying to do, and what limits you today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Desired behavior
+      description: Include an interaction example or acceptance criteria.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - macOS
+        - Windows
+        - Linux
+        - WSL
+        - Multiple platforms
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and additional context
+      description: Include what you tried and any relevant examples without private project content.
