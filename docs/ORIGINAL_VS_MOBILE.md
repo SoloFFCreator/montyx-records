@@ -2,6 +2,10 @@
 
 This deployment is based on the upstream MiniMax Code CLI/TUI. The core agent, provider, session, plugin, and command behavior remains upstream-compatible; the changes are focused on terminal layout behavior for mobile use.
 
+![Phone layout comparison chart](assets/mobile-layout-comparison.png)
+
+The chart uses the actual layout breakpoints and horizontal-padding rules from this build. It shows why the Termux version retains more usable editor width between 48 and 55 terminal columns.
+
 | Area | Original version | Phone-friendly build |
 |---|---|---|
 | Primary target | Desktop terminals and full-size SSH sessions | Termux, mobile terminal apps, and narrow SSH panes |

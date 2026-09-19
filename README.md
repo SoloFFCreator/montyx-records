@@ -1,8 +1,22 @@
 # MiniMax Code Termux
-
 A phone-friendly build of **MiniMax Code**, the terminal coding agent for MiniMax, custom models, and development tools. This repository is tuned for Android users running **Termux**, mobile SSH clients, and narrow or short terminal windows.
-
 > This is a terminal application, not a native Android APK. It runs on a phone through Termux or SSH.
+
+```text
+███╗   ███╗██╗███╗   ██╗██╗███╗   ███╗ █████╗ ██╗  ██╗
+████╗ ████║██║████╗  ██║██║████╗ ████║██╔══██╗╚██╗██╔╝
+██╔████╔██║██║██╔██╗ ██║██║██╔████╔██║███████║ ╚███╔╝
+██║╚██╔╝██║██║██║╚██╗██║██║██║╚██╔╝██║██╔══██║ ██╔██╗
+██║ ╚═╝ ██║██║██║ ╚████║██║██║ ╚═╝ ██║██║  ██║██╔╝ ██╗
+╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
+
+                 C O D E   T E R M U X
+             small screen · serious coding
+```
+
+![Phone layout comparison chart](docs/assets/mobile-layout-comparison.png)
+
+The chart above compares usable content width across terminal sizes. The Termux build enters compact mode earlier, preserving more room for the editor on phone-sized terminals.
 
 ## Why this version exists
 
