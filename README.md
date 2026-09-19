@@ -1,8 +1,16 @@
-<p align="center">
-  <img src="docs/assets/termux-wordmark.svg" alt="MiniMax Code Termux" width="760">
-</p>
+```text
+███╗   ███╗██╗███╗   ██╗██╗███╗   ███╗ █████╗ ██╗  ██╗
+████╗ ████║██║████╗  ██║██║████╗ ████║██╔══██╗╚██╗██╔╝
+██╔████╔██║██║██╔██╗ ██║██║██╔████╔██║███████║ ╚███╔╝
+██║╚██╔╝██║██║██║╚██╗██║██║██║╚██╔╝██║██╔══██║ ██╔██╗
+██║ ╚═╝ ██║██║██║ ╚████║██║██║ ╚═╝ ██║██║  ██║██╔╝ ██╗
+╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
 
-<p align="center"><strong>A phone-friendly MiniMax Code terminal for Termux and mobile SSH.</strong></p>
+                 C O D E   T E R M U X
+             small screen · serious coding
+```
+
+**A phone-friendly MiniMax Code terminal for Termux and mobile SSH.**
 
 <p align="center">
   <a href="docs/MOBILE_TERMUX.md">Mobile guide</a> ·
@@ -25,7 +33,7 @@ The chart is derived from the actual layout rules in this repository. The mobile
 - **Phone-first layout:** compact mode starts below 56 columns or 16 rows.
 - **Responsive welcome screen:** the welcome layout considers both width and available height.
 - **Upstream-compatible runtime:** agent behavior and provider integrations remain unchanged.
-- **Blue terminal branding:** use the included banner script in Termux or your shell profile.
+- **Terminal branding:** use the included blue ASCII banner script in Termux or your shell profile.
 - **Reproducible builds:** the repository includes the same locked dependency and build workflow used for validation.
 
 ## Quick start on Android
