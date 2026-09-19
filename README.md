@@ -1,40 +1,39 @@
+<p align="center">
+  <img src="docs/assets/termux-wordmark.svg" alt="MiniMax Code Termux" width="760">
+</p>
+
+<p align="center"><strong>A phone-friendly MiniMax Code terminal for Termux and mobile SSH.</strong></p>
+
+<p align="center">
+  <a href="docs/MOBILE_TERMUX.md">Mobile guide</a> ·
+  <a href="docs/ORIGINAL_VS_MOBILE.md">Original vs mobile</a> ·
+  <a href="docs/installation.md">Installation reference</a>
+</p>
+
 # MiniMax Code Termux
-A phone-friendly build of **MiniMax Code**, the terminal coding agent for MiniMax, custom models, and development tools. This repository is tuned for Android users running **Termux**, mobile SSH clients, and narrow or short terminal windows.
-> This is a terminal application, not a native Android APK. It runs on a phone through Termux or SSH.
 
-```text
-███╗   ███╗██╗███╗   ██╗██╗███╗   ███╗ █████╗ ██╗  ██╗
-████╗ ████║██║████╗  ██║██║████╗ ████║██╔══██╗╚██╗██╔╝
-██╔████╔██║██║██╔██╗ ██║██║██╔████╔██║███████║ ╚███╔╝
-██║╚██╔╝██║██║██║╚██╗██║██║██║╚██╔╝██║██╔══██║ ██╔██╗
-██║ ╚═╝ ██║██║██║ ╚████║██║██║ ╚═╝ ██║██║  ██║██╔╝ ██╗
-╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
+MiniMax Code Termux is a phone-oriented distribution of [MiniMax Code](https://github.com/MiniMax-AI/minimax-code). It preserves the upstream agent, provider, session, plugin, and command behavior while making the terminal interface more comfortable on **Termux**, mobile SSH clients, split-screen terminals, and short terminal windows.
 
-                 C O D E   T E R M U X
-             small screen · serious coding
-```
+> **Important:** this is a Node.js terminal application, not a native Android APK. It runs on Android through Termux or a mobile SSH client.
 
 ![Phone layout comparison chart](docs/assets/mobile-layout-comparison.png)
 
-The chart above compares usable content width across terminal sizes. The Termux build enters compact mode earlier, preserving more room for the editor on phone-sized terminals.
+The chart is derived from the actual layout rules in this repository. The mobile build enters compact mode earlier so the editor retains more usable space on narrow screens.
 
-## Why this version exists
+## Highlights
 
-The upstream MiniMax Code interface is designed for desktop-sized terminals. This version keeps the upstream agent and command behavior while improving the terminal layout for mobile screens:
+- **Phone-first layout:** compact mode starts below 56 columns or 16 rows.
+- **Responsive welcome screen:** the welcome layout considers both width and available height.
+- **Upstream-compatible runtime:** agent behavior and provider integrations remain unchanged.
+- **Blue terminal branding:** use the included banner script in Termux or your shell profile.
+- **Reproducible builds:** the repository includes the same locked dependency and build workflow used for validation.
 
-- Compact mode starts below **56 columns** instead of 48.
-- Compact mode starts below **16 rows** instead of 12.
-- The welcome screen considers both terminal width and available height.
-- Narrow screens use less horizontal padding so the message editor keeps usable space.
-- Regression tests cover common phone-sized widths and short viewports.
+## Quick start on Android
 
-## Install on Android with Termux
-
-Install Termux from [F-Droid](https://termux.dev/) or the official Termux source, then run:
+Install [Termux](https://termux.dev/) from F-Droid or the official Termux source, then run:
 
 ```bash
-pkg update
-pkg upgrade
+pkg update && pkg upgrade
 pkg install git nodejs-lts
 npm install --global pnpm@9.12.0
 
@@ -42,29 +41,24 @@ git clone https://github.com/SoloFFCreator/minimax-code-termux.git
 cd minimax-code-termux
 pnpm install --frozen-lockfile
 pnpm build
-```
-
-Start the interactive UI:
-
-```bash
 pnpm mcode
 ```
 
-Start with a prompt:
+Run the blue ASCII banner:
 
 ```bash
-pnpm mcode "Review this project and explain the safest next change"
+bash scripts/print-termux-banner.sh
 ```
 
-Resume the latest session after reconnecting:
+To show it whenever a Termux shell opens, add this line to `~/.bashrc`:
 
 ```bash
-pnpm mcode --continue
+bash "$HOME/minimax-code-termux/scripts/print-termux-banner.sh"
 ```
 
-## Configure an account or provider
+## Configure MiniMax or a custom provider
 
-Launch `pnpm mcode` and follow the managed MiniMax login flow. For a compatible custom provider, set the API key in the environment and add the provider:
+Start `pnpm mcode` and follow the managed MiniMax login flow. For an OpenAI-compatible provider, configure the key through an environment variable:
 
 ```bash
 export MCODE_PROVIDER_API_KEY="your-key"
@@ -79,53 +73,90 @@ pnpm mcode provider add \
 
 Never commit API keys to GitHub. Store secrets in your local Termux profile or a password manager.
 
-## Phone usage tips
+## Build the application-ready CLI bundle
 
-1. Use at least 48 columns when possible; rotate to landscape for long code and tool output.
-2. Configure the terminal's extra-keys row for `Esc`, `Ctrl`, and arrow keys.
-3. Use `Shift+Enter` for a newline when supported; the configured fallback is also available.
+The supported application build produces a self-contained compiled CLI distribution in `dist/`. Use this command from the repository root:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+node dist/cli.js
+```
+
+The equivalent production launch command is:
+
+```bash
+pnpm start
+```
+
+For a convenient Termux launcher, create a local command that points to the built application:
+
+```bash
+mkdir -p "$PREFIX/bin"
+cat > "$PREFIX/bin/mcode-termux" <<'EOF'
+#!/data/data/com.termux/files/usr/bin/sh
+cd "$HOME/minimax-code-termux"
+exec node dist/cli.js "$@"
+EOF
+chmod +x "$PREFIX/bin/mcode-termux"
+mcode-termux
+```
+
+This creates an application-ready **CLI bundle and launcher**. It does not create a native APK. A native Android app would require a separate Android wrapper, UI, permissions model, and release/signing workflow; no official native APK conversion is included here.
+
+## Everyday commands
+
+| Goal | Command |
+|---|---|
+| Start the interactive UI | `pnpm mcode` |
+| Start with a prompt | `pnpm mcode "Review this project"` |
+| Resume the latest session | `pnpm mcode --continue` |
+| Run one headless task | `pnpm mcode exec "your prompt"` |
+| Show CLI help | `pnpm mcode --help` |
+| Build the distribution | `pnpm build` |
+| Run the built distribution | `node dist/cli.js` |
+| Print the blue banner | `bash scripts/print-termux-banner.sh` |
+
+## Phone configuration tips
+
+1. Keep at least 48 terminal columns available; use landscape orientation for long code or tool output.
+2. Configure the Termux extra-keys row for `Esc`, `Ctrl`, and arrow keys.
+3. Use `Shift+Enter` for a newline when supported; the configured fallback remains available.
 4. Keep the font large enough to read and avoid aggressive client-side line wrapping.
 5. Use `pnpm mcode --continue` after an SSH or mobile terminal reconnect.
 
-## Useful commands
+## Original MiniMax Code versus Termux edition
 
-| Task | Command |
-|---|---|
-| Start the UI | `pnpm mcode` |
-| Continue the latest session | `pnpm mcode --continue` |
-| Run one headless task | `pnpm mcode exec "your prompt"` |
-| Show help | `pnpm mcode --help` |
-| Install dependencies | `pnpm install --frozen-lockfile` |
-| Build the project | `pnpm build` |
-| Run the mobile layout test | `pnpm exec vitest run packages/tui/test/unit/tui/shell/layout-policy.test.ts` |
-| Run typecheck | `pnpm typecheck` |
-
-## Original versus phone-friendly build
-
-| Area | Original MiniMax Code | This build |
+| Area | Original MiniMax Code | MiniMax Code Termux |
 |---|---|---|
-| Main target | Desktop terminals | Termux, mobile SSH, and narrow terminals |
+| Primary target | Desktop terminals | Termux, mobile SSH, and narrow terminals |
 | Compact width | Below 48 columns | Below 56 columns |
 | Compact height | Below 12 rows | Below 16 rows |
 | Welcome sizing | Primarily width-based | Width and available height |
 | Agent behavior | Upstream behavior | Unchanged |
 | Native Android UI | Not included | Not included; use Termux or SSH |
 
-Read the full [original-versus-mobile comparison](docs/ORIGINAL_VS_MOBILE.md) and the complete [Termux/mobile usage guide](docs/MOBILE_TERMUX.md).
+Read the detailed [original-versus-mobile comparison](docs/ORIGINAL_VS_MOBILE.md), including the comparison chart, and the complete [Termux/mobile guide](docs/MOBILE_TERMUX.md).
 
 ## Validation
 
-The deployed mobile layout has been verified with:
+The mobile layout has been validated with:
 
 - Three focused layout policy tests.
 - Standalone TypeScript typechecking.
 - A production bundle build.
-- Whitespace validation with `git diff --check`.
+- `git diff --check` whitespace validation.
 
-## Limitations
+Run the focused regression test yourself:
 
-A terminal application cannot provide native Android widgets, push notifications, touch-specific controls, or independent background execution by itself. Those capabilities require a separate Android wrapper or mobile client. This project focuses on making the existing MiniMax Code terminal experience comfortable to use from a phone.
+```bash
+pnpm exec vitest run packages/tui/test/unit/tui/shell/layout-policy.test.ts
+```
+
+## Project boundaries
+
+This project is intentionally a terminal application. It does not provide native Android widgets, push notifications, touch-specific controls, or independent background execution. Those capabilities require a separate Android wrapper or mobile client.
 
 ## License and upstream context
 
-See [LICENSE](LICENSE), [CONTRIBUTING.md](CONTRIBUTING.md), and the upstream project documentation in `docs/`. This repository preserves the MiniMax Code runtime and extends its terminal layout for mobile use.
+See [LICENSE](LICENSE), [CONTRIBUTING.md](CONTRIBUTING.md), and the upstream documentation in `docs/`. This repository preserves the MiniMax Code runtime and extends its terminal layout for mobile use.
