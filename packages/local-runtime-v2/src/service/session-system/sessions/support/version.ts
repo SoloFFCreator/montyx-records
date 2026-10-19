@@ -1,1 +1,0 @@
-export const CURRENT_SESSION_DATA_VERSION = 4;

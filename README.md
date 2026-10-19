@@ -1,170 +1,49 @@
-```text
-███╗   ███╗██╗███╗   ██╗██╗███╗   ███╗ █████╗ ██╗  ██╗
-████╗ ████║██║████╗  ██║██║████╗ ████║██╔══██╗╚██╗██╔╝
-██╔████╔██║██║██╔██╗ ██║██║██╔████╔██║███████║ ╚███╔╝
-██║╚██╔╝██║██║██║╚██╗██║██║██║╚██╔╝██║██╔══██║ ██╔██╗
-██║ ╚═╝ ██║██║██║ ╚████║██║██║ ╚═╝ ██║██║  ██║██╔╝ ██╗
-╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
+# MONTYX RECORDS website
 
-                 C O D E   T E R M U X
-             small screen · serious coding
-```
+A responsive official website and private release-management dashboard for MONTYX RECORDS. The source is React/TypeScript with an Express/tRPC API, Drizzle ORM and the managed MySQL database. The current deployment project uses managed Webdev services and object storage; Supabase is not provisioned. Migrations are committed under `drizzle/`.
 
-**A phone-friendly MiniMax Code terminal for Termux and mobile SSH.**
+## Local development
 
-<p align="center">
-  <a href="docs/MOBILE_TERMUX.md">Mobile guide</a> ·
-  <a href="docs/ORIGINAL_VS_MOBILE.md">Original vs mobile</a> ·
-  <a href="docs/installation.md">Installation reference</a>
-</p>
+The project uses pinned pnpm 10.18.0. In the managed project environment, `DATABASE_URL`, Manus OAuth settings and managed-storage service variables are supplied by the host. Run `pnpm db:push` when changing the schema. The development server is `pnpm dev`; the production build is `pnpm build`. For a direct production start, `pnpm start` applies pending migrations first and then starts the server. Never add secret values to this repository or browser bundle.
 
-# MiniMax Code Termux
+The production container builds without needing the database URL at image-build time. At runtime, it runs the migration ledger and only then starts the app. The initial MONTYX artist profile and `MONTAGEM DA SEDUÇÃO` release are inserted idempotently when the database tables are available. The release begins as a draft with distribution status `pending`; it is not in the public catalogue until an authorized admin verifies details and explicitly publishes it.
 
-MiniMax Code Termux is a phone-oriented distribution of [MiniMax Code](https://github.com/MiniMax-AI/minimax-code). It preserves the upstream agent, provider, session, plugin, and command behavior while making the terminal interface more comfortable on **Termux**, mobile SSH clients, split-screen terminals, and short terminal windows.
+## First administrator
 
-> **Important:** this is a Node.js terminal application, not a native Android APK. It runs on Android through Termux or a mobile SSH client.
+1. Open `/admin` and sign in with the Manus account that should administer the label. This creates an ordinary authenticated user record, not an admin account.
+2. In a trusted project-owner terminal with the project database environment loaded, run `pnpm admin:bootstrap`. Choose the existing account belonging to the label owner and type the requested confirmation phrase. The script refuses to run if an admin already exists, and it cannot create or promote an account through a public website endpoint. In a non-interactive terminal, pass `pnpm admin:bootstrap -- --open-id <existing-oauth-open-id>` after confirming the exact ID in the secure project environment.
+3. Refresh `/admin`. Future elevated-role changes must be performed through a trusted database/operator path; no public signup or public role-management control exists.
 
-![Phone layout comparison chart](docs/assets/mobile-layout-comparison.png)
+Retain access to the secure project terminal/database credentials. Do not put OAuth tokens, database URLs or the identity reference in source control or public support messages.
 
-The chart is derived from the actual layout rules in this repository. The mobile build enters compact mode earlier so the editor retains more usable space on narrow screens.
+## Admin workflow for a release
 
-## Highlights
+In `/admin`, create or open a release, enter title, artist, slug, release type/date, genres and description, then save as a draft. The requested initial entry is pre-seeded with ISRC `NL9KR2145620` and UPC/EAN `8721667789184`; both remain private. Confirm all identifiers, release date, distributor, exact label credit, artist permissions and ownership terms against the actual source records. Upload approved artwork through the authenticated dashboard. Add only real HTTPS platform links, mark only intended verified links `public`, set distribution status only when confirmed, and use “Preview release” in the editor. Only then choose `Published`; the interface asks for an explicit confirmation. Drafts, delivery references, private master notes, audio storage references and contracts are never returned by public endpoints.
 
-- **Phone-first layout:** compact mode starts below 56 columns or 16 rows.
-- **Responsive welcome screen:** the welcome layout considers both width and available height.
-- **Upstream-compatible runtime:** agent behavior and provider integrations remain unchanged.
-- **Terminal branding:** use the included blue ASCII banner script in Termux or your shell profile.
-- **Reproducible builds:** the repository includes the same locked dependency and build workflow used for validation.
+Use the catalogue filters and public release page to check the result after publishing. Unconfigured services and social destinations do not render as links. No play counts, audience statistics, reviews or playlist placements are generated.
 
-## Quick start on Android
+## Contact form
 
-Install [Termux](https://termux.dev/) from F-Droid or the official Termux source, then run:
+Contact messages are validated and saved to the database inbox at `/admin`. The contact form does not currently send email: no SMTP/provider credentials or label email address were supplied. Success copy explicitly says the message was stored, not emailed. Set a verified contact email in Label settings before exposing a `mailto:` route. If email forwarding is added later, use protected server-side credentials and add delivery/error tracking; do not place credentials in browser variables. The form uses a honeypot and allows at most five messages per rate-limit hash per 15 minutes.
 
-```bash
-pkg update && pkg upgrade
-pkg install git nodejs-lts
-npm install --global pnpm@9.12.0
+## Environment variables
 
-git clone https://github.com/SoloFFCreator/minimax-code-termux.git
-cd minimax-code-termux
-pnpm install --frozen-lockfile
-pnpm build
-pnpm mcode
-```
+| Name | Purpose | Source |
+| --- | --- | --- |
+| `DATABASE_URL` | Managed MySQL connection; server-side only | Provisioned by the managed project |
+| `MANUS_PROJECT_ID` | OAuth application ID | Provisioned by the managed project |
+| `MANUS_OAUTH_PORTAL_URL` | Browser authorization portal | Provisioned by the managed project |
+| `MANUS_OAUTH_API_URL` | Server token exchange/user lookup | Provisioned by the managed project |
+| `MANUS_JWT_SECRET` | Platform session validation/signing | Provisioned by the managed project |
+| `MANUS_API_URL` | Managed service endpoint for storage | Provisioned by the managed project |
+| `MANUS_API_KEY` | Server-only storage authorization | Provisioned by the managed project |
+| `PUBLIC_SITE_URL` | Verified public origin used for canonical/social metadata | Set once the custom domain is attached; currently absent |
+| `PORT` | HTTP listener port | Set by the managed host (default 3000) |
 
-Run the blue ASCII banner:
+`OWNER_OPEN_ID`, SMTP keys and external email-provider keys are not currently configured. Admin bootstrap uses an existing OAuth identity in the database rather than a production password.
 
-```bash
-bash scripts/print-termux-banner.sh
-```
+## Rights, privacy and operations
 
-To show it whenever a Termux shell opens, add this line to `~/.bashrc`:
+The label’s policies are website-use drafts and do not claim legal compliance. Streaming services have their own terms. Artists retain master ownership unless a separate written agreement states otherwise; a label credit does not establish master ownership. Store actual agreements outside the public site and never upload unreleased audio through the public contact form.
 
-```bash
-bash "$HOME/minimax-code-termux/scripts/print-termux-banner.sh"
-```
-
-## Configure MiniMax or a custom provider
-
-Start `pnpm mcode` and follow the managed MiniMax login flow. For an OpenAI-compatible provider, configure the key through an environment variable:
-
-```bash
-export MCODE_PROVIDER_API_KEY="your-key"
-pnpm mcode provider add \
-  --name my-provider \
-  --base-url https://example.com/v1 \
-  --api-format openai-completions \
-  --model my-model \
-  --api-key-env MCODE_PROVIDER_API_KEY \
-  --use
-```
-
-Never commit API keys to GitHub. Store secrets in your local Termux profile or a password manager.
-
-## Build the application-ready CLI bundle
-
-The supported application build produces a self-contained compiled CLI distribution in `dist/`. Use this command from the repository root:
-
-```bash
-pnpm install --frozen-lockfile
-pnpm build
-node dist/cli.js
-```
-
-The equivalent production launch command is:
-
-```bash
-pnpm start
-```
-
-For a convenient Termux launcher, create a local command that points to the built application:
-
-```bash
-mkdir -p "$PREFIX/bin"
-cat > "$PREFIX/bin/mcode-termux" <<'EOF'
-#!/data/data/com.termux/files/usr/bin/sh
-cd "$HOME/minimax-code-termux"
-exec node dist/cli.js "$@"
-EOF
-chmod +x "$PREFIX/bin/mcode-termux"
-mcode-termux
-```
-
-This creates an application-ready **CLI bundle and launcher**. It does not create a native APK. A native Android app would require a separate Android wrapper, UI, permissions model, and release/signing workflow; no official native APK conversion is included here.
-
-## Everyday commands
-
-| Goal | Command |
-|---|---|
-| Start the interactive UI | `pnpm mcode` |
-| Start with a prompt | `pnpm mcode "Review this project"` |
-| Resume the latest session | `pnpm mcode --continue` |
-| Run one headless task | `pnpm mcode exec "your prompt"` |
-| Show CLI help | `pnpm mcode --help` |
-| Build the distribution | `pnpm build` |
-| Run the built distribution | `node dist/cli.js` |
-| Print the blue banner | `bash scripts/print-termux-banner.sh` |
-
-## Phone configuration tips
-
-1. Keep at least 48 terminal columns available; use landscape orientation for long code or tool output.
-2. Configure the Termux extra-keys row for `Esc`, `Ctrl`, and arrow keys.
-3. Use `Shift+Enter` for a newline when supported; the configured fallback remains available.
-4. Keep the font large enough to read and avoid aggressive client-side line wrapping.
-5. Use `pnpm mcode --continue` after an SSH or mobile terminal reconnect.
-
-## Original MiniMax Code versus Termux edition
-
-| Area | Original MiniMax Code | MiniMax Code Termux |
-|---|---|---|
-| Primary target | Desktop terminals | Termux, mobile SSH, and narrow terminals |
-| Compact width | Below 48 columns | Below 56 columns |
-| Compact height | Below 12 rows | Below 16 rows |
-| Welcome sizing | Primarily width-based | Width and available height |
-| Agent behavior | Upstream behavior | Unchanged |
-| Native Android UI | Not included | Not included; use Termux or SSH |
-
-Read the detailed [original-versus-mobile comparison](docs/ORIGINAL_VS_MOBILE.md), including the comparison chart, and the complete [Termux/mobile guide](docs/MOBILE_TERMUX.md).
-
-## Validation
-
-The mobile layout has been validated with:
-
-- Three focused layout policy tests.
-- Standalone TypeScript typechecking.
-- A production bundle build.
-- `git diff --check` whitespace validation.
-
-Run the focused regression test yourself:
-
-```bash
-pnpm exec vitest run packages/tui/test/unit/tui/shell/layout-policy.test.ts
-```
-
-## Project boundaries
-
-This project is intentionally a terminal application. It does not provide native Android widgets, push notifications, touch-specific controls, or independent background execution. Those capabilities require a separate Android wrapper or mobile client.
-
-## License and upstream context
-
-See [LICENSE](LICENSE), [CONTRIBUTING.md](CONTRIBUTING.md), and the upstream documentation in `docs/`. This repository preserves the MiniMax Code runtime and extends its terminal layout for mobile use.
+The domain `montyxlabel.cyou` currently displays a NicNames parked page. The Webdev project has no custom-domain mapping, and no registrar/DNS credential is available in this session. After the published host provides its expected DNS target, the domain owner must configure those records at the registrar (or provide authorized DNS access); root and `www` HTTPS must then be tested. Until then, the managed host is not the custom-domain site. Do not claim the domain is deployed based solely on source or Preview.
