@@ -1,9 +1,11 @@
 import { COOKIE_NAME } from "@shared/const";
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { sdk } from "./_core/sdk";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
+import { upsertUser } from "./db";
 import {
   deleteRelease,
   getPublicArtist,
@@ -322,6 +324,25 @@ const adminRouter = router({
 export const appRouter = router({
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    adminLogin: publicProcedure
+      .input(z.object({ username: z.string().trim().min(1).max(100), password: z.string().min(1).max(200) }))
+      .mutation(async ({ input, ctx }) => {
+        const configuredUsername = ENV.adminUsername;
+        const configuredPassword = ENV.adminPassword;
+        const same = (left: string, right: string) => {
+          const a = Buffer.from(left);
+          const b = Buffer.from(right);
+          return a.length === b.length && timingSafeEqual(a, b);
+        };
+        if (!configuredUsername || !configuredPassword || !same(input.username, configuredUsername) || !same(input.password, configuredPassword)) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid administrator credentials." });
+        }
+        const openId = `montyx-admin:${createHash("sha256").update(configuredUsername).digest("hex").slice(0, 48)}`;
+        await upsertUser({ openId, name: "Montyx Administrator", loginMethod: "admin-password", role: "admin", lastSignedIn: new Date() });
+        const token = await sdk.createSessionToken(openId, { name: "Montyx Administrator" });
+        ctx.res.cookie(COOKIE_NAME, token, getSessionCookieOptions(ctx.req));
+        return { success: true } as const;
+      }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
