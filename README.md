@@ -1,10 +1,10 @@
 # MONTYX RECORDS website
 
-A responsive official website and private release-management dashboard for MONTYX RECORDS. The source is React/TypeScript with an Express/tRPC API, Drizzle ORM and the managed MySQL database. The current deployment project uses managed Webdev services and object storage; Supabase is not provisioned. Migrations are committed under `drizzle/`.
+A responsive official website and private release-management dashboard for MONTYX RECORDS. The source is React/TypeScript with an Express/tRPC API, Drizzle ORM and the managed MySQL database. The current deployment project uses managed Webdev services and object storage; Supabase is not provisioned. Migrations are committed under `drizzle/`. Source repository: https://github.com/SoloFFCreator/montyx-records.
 
 ## Local development
 
-The project uses pinned pnpm 10.18.0. In the managed project environment, `DATABASE_URL`, Manus OAuth settings and managed-storage service variables are supplied by the host. Run `pnpm db:push` when changing the schema. The development server is `pnpm dev`; the production build is `pnpm build`. For a direct production start, `pnpm start` applies pending migrations first and then starts the server. Never add secret values to this repository or browser bundle.
+The project uses pinned pnpm 10.18.0. In the managed project environment, `DATABASE_URL`, Manus OAuth settings and managed-storage service variables are supplied by the host. For a schema change, update the Drizzle schema/relations, generate a migration with `pnpm exec drizzle-kit generate`, inspect the SQL, then apply it with `pnpm db:migrate`. Avoid direct `db:push` against the shared managed database. The development server is `pnpm dev`; the production build is `pnpm build`. For a direct production start, `pnpm start` applies pending migrations first and then starts the server. Never add secret values to this repository or browser bundle.
 
 The production container builds without needing the database URL at image-build time. At runtime, it runs the migration ledger and only then starts the app. The initial MONTYX artist profile and `MONTAGEM DA SEDUÇÃO` release are inserted idempotently when the database tables are available. The release begins as a draft with distribution status `pending`; it is not in the public catalogue until an authorized admin verifies details and explicitly publishes it.
 
@@ -37,7 +37,7 @@ Contact messages are validated and saved to the database inbox at `/admin`. The 
 | `MANUS_JWT_SECRET` | Platform session validation/signing | Provisioned by the managed project |
 | `MANUS_API_URL` | Managed service endpoint for storage | Provisioned by the managed project |
 | `MANUS_API_KEY` | Server-only storage authorization | Provisioned by the managed project |
-| `PUBLIC_SITE_URL` | Verified public origin used for canonical/social metadata | Set once the custom domain is attached; currently absent |
+| `PUBLIC_SITE_URL` | Verified HTTPS root origin used for canonical/social metadata and dynamic sitemap/robots output | Set only after the public origin is verified; currently absent. Until then, the safe sitemap is empty and robots disallow crawling. |
 | `PORT` | HTTP listener port | Set by the managed host (default 3000) |
 
 `OWNER_OPEN_ID`, SMTP keys and external email-provider keys are not currently configured. Admin bootstrap uses an existing OAuth identity in the database rather than a production password.
