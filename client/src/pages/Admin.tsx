@@ -123,7 +123,17 @@ export default function Admin() {
   });
   const [status, setStatus] = useState("");
   const [formError, setFormError] = useState("");
+  const [adminLoginError, setAdminLoginError] = useState("");
+  const [adminLoginPending, setAdminLoginPending] = useState(false);
   const utils = trpc.useUtils();
+  const adminLogin = trpc.auth.adminLogin.useMutation({
+    onSuccess: async () => {
+      setAdminLoginError("");
+      await utils.auth.me.invalidate();
+    },
+    onError: error => setAdminLoginError(error.message),
+    onSettled: () => setAdminLoginPending(false),
+  });
   const logout = trpc.auth.logout.useMutation({
     onSuccess: async () => {
       await utils.auth.me.invalidate();
@@ -205,18 +215,31 @@ export default function Admin() {
           <span className="eyebrow red">PRIVATE LABEL AREA</span>
           <h1>Admin access</h1>
           <p>
-            Sign in with the authorized Manus account. The site does not offer
-            public administrator registration.
+            Use the label administrator account or continue with the authorized
+            Manus account.
           </p>
-          {authError && (
-            <div className="notice notice-error">
-              Sign-in status could not be checked.
-            </div>
-          )}
-          <button
-            className="button button-primary"
-            onClick={() => startLogin()}
+          {authError && <div className="notice notice-error">Sign-in status could not be checked.</div>}
+          <form
+            className="admin-form"
+            onSubmit={event => {
+              event.preventDefault();
+              const values = new FormData(event.currentTarget);
+              setAdminLoginPending(true);
+              adminLogin.mutate({
+                username: String(values.get("username") ?? ""),
+                password: String(values.get("password") ?? ""),
+              });
+            }}
           >
+            <label>Administrator username<input name="username" autoComplete="username" required /></label>
+            <label>Administrator password<input name="password" type="password" autoComplete="current-password" required /></label>
+            {adminLoginError && <div className="notice notice-error" role="alert">{adminLoginError}</div>}
+            <button className="button button-primary" disabled={adminLoginPending}>
+              {adminLoginPending ? "Signing in…" : "Sign in as administrator"}
+            </button>
+          </form>
+          <div className="admin-divider">OR</div>
+          <button className="button button-outline" onClick={() => startLogin()}>
             Continue with Manus ↗
           </button>
           <a className="admin-back" href="/">
