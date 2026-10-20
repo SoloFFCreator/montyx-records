@@ -47,7 +47,7 @@ export async function saveSettings(values: Record<string, string>) {
     await db
       .insert(siteSettings)
       .values({ key, value })
-      .onDuplicateKeyUpdate({ set: { value } });
+      .onConflictDoUpdate({ target: siteSettings.key, set: { value } });
   }
 }
 

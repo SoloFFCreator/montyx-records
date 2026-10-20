@@ -7,7 +7,7 @@ export const ENV = {
   get cookieSecret() {
     return process.env.MONTYX_SESSION_SECRET ?? process.env.MONTYX_ADMIN_PASSWORD ?? "";
   },
-  get databaseUrl() { return process.env.DATABASE_URL ?? ""; },
+  get databaseUrl() { return process.env.POSTGRES_URL ?? process.env.DATABASE_URL ?? ""; },
   get oAuthServerUrl() { return ""; },
   // Preserve the legacy hint when supplied; otherwise roles remain application data.
   get ownerOpenId() { return process.env.OWNER_OPEN_ID ?? ""; },
