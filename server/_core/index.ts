@@ -15,9 +15,8 @@ import { serveStatic, setupVite } from "./vite";
 import { seedInitialContent } from "../content";
 import { registerGatewayDocs } from "./gatewayDocs";
 
-async function startServer() {
+export async function createApp() {
   const app = express();
-  const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -38,15 +37,18 @@ async function startServer() {
       createContext,
     })
   );
-  // development mode uses Vite, production mode uses static files
+  return app;
+}
+
+async function startServer() {
+  const app = await createApp();
+  const server = createServer(app);
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
-
   await seedInitialContent();
-
   const port = Number(process.env.PORT || "3000");
   if (!Number.isInteger(port) || port < 1 || port > 65535)
     throw new Error("Invalid PORT");
@@ -59,7 +61,9 @@ async function startServer() {
   );
 }
 
-startServer().catch(error => {
-  console.error(error);
-  process.exit(1);
-});
+if (process.env.VERCEL !== "1") {
+  startServer().catch(error => {
+    console.error(error);
+    process.exit(1);
+  });
+}
