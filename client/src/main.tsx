@@ -38,11 +38,20 @@ const trpcClient = trpc.createClient({
           return {};
 
       },
-      fetch(input, init) {
-        return globalThis.fetch(input, {
+      async fetch(input, init) {
+        const response = await globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
         });
+        const contentType = response.headers.get("content-type") ?? "";
+        if (!contentType.includes("application/json")) {
+          throw new Error(
+            response.status === 404
+              ? "The admin service is not deployed. Please redeploy the latest project version."
+              : `The admin service returned an unexpected response (${response.status}).`
+          );
+        }
+        return response;
       },
     }),
   ],

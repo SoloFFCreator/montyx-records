@@ -1,8 +1,13 @@
 {
   "framework": "vite",
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm build:static",
+  "buildCommand": "pnpm build",
   "outputDirectory": "dist/public",
+  "functions": {
+    "api/**/*.ts": {
+      "includeFiles": "dist/**"
+    }
+  },
   "cleanUrls": true,
   "trailingSlash": false
 }
