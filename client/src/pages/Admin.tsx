@@ -1,5 +1,4 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { BrandMark, usePageMeta } from "@/components/SiteLayout";
 
@@ -215,8 +214,7 @@ export default function Admin() {
           <span className="eyebrow red">PRIVATE LABEL AREA</span>
           <h1>Admin access</h1>
           <p>
-            Use the label administrator account or continue with the authorized
-            Manus account.
+            Sign in with the private label administrator account.
           </p>
           {authError && <div className="notice notice-error">Sign-in status could not be checked.</div>}
           <form
@@ -238,10 +236,6 @@ export default function Admin() {
               {adminLoginPending ? "Signing in…" : "Sign in as administrator"}
             </button>
           </form>
-          <div className="admin-divider">OR</div>
-          <button className="button button-outline" onClick={() => startLogin()}>
-            Continue with Manus ↗
-          </button>
           <a className="admin-back" href="/">
             ← Return to the label site
           </a>
