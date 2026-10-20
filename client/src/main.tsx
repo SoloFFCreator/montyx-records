@@ -1,11 +1,10 @@
 import { trpc } from "@/lib/trpc";
-import { COOKIE_NAME, UNAUTHED_ERR_MSG } from "@shared/const";
+import { UNAUTHED_ERR_MSG } from "@shared/const";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
-import { startLogin } from "./const";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -16,7 +15,7 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
     error.message !== UNAUTHED_ERR_MSG
   )
     return;
-  startLogin();
+  if (window.location.pathname !== "/admin") window.location.assign("/admin");
 };
 queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
@@ -36,21 +35,8 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       headers() {
-        try {
-          const raw = sessionStorage.getItem("manus-cookie");
-          if (raw) {
-            const prefix = `${COOKIE_NAME}=`;
-            const token = raw
-              .split(";")
-              .find(item => item.trim().startsWith(prefix))
-              ?.trim()
-              .slice(prefix.length);
-            if (token) return { Authorization: `Bearer ${token}` };
-          }
-        } catch {
-          /* unavailable browser storage */
-        }
-        return {};
+          return {};
+
       },
       fetch(input, init) {
         return globalThis.fetch(input, {

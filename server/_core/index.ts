@@ -1,4 +1,9 @@
-import "dotenv/config";
+import { config } from "dotenv";
+
+config({ path: "/vercel/share/.env.project" });
+config({ path: ".env.development.local" });
+config({ path: ".env" });
+
 import express from "express";
 import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
