@@ -293,6 +293,23 @@ class SDKServer {
 
     const sessionUserId = session.openId;
     const signedInAt = new Date();
+
+    // The private label administrator is authenticated by the signed JWT and
+    // must not depend on the optional content database just to open the panel.
+    if (sessionUserId.startsWith("montyx-admin:")) {
+      return {
+        id: -1,
+        openId: sessionUserId,
+        name: session.name || "Montyx Administrator",
+        email: null,
+        loginMethod: "admin-password",
+        role: "admin",
+        createdAt: signedInAt,
+        updatedAt: signedInAt,
+        lastSignedIn: signedInAt,
+      } as AuthenticatedUser;
+    }
+
     let user = await db.getUserByOpenId(sessionUserId);
 
     // If user not in DB, sync from OAuth server automatically

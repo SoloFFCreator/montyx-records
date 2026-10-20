@@ -338,7 +338,9 @@ export const appRouter = router({
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid administrator credentials." });
         }
         const openId = `montyx-admin:${createHash("sha256").update(configuredUsername).digest("hex").slice(0, 48)}`;
-        await upsertUser({ openId, name: "Montyx Administrator", loginMethod: "admin-password", role: "admin", lastSignedIn: new Date() });
+        // Password authentication must remain available even when the optional
+        // content database is not configured. The session is self-contained;
+        // admin content operations will report a clear storage error if needed.
         const token = await sdk.createSessionToken(openId, { name: "Montyx Administrator" });
         ctx.res.cookie(COOKIE_NAME, token, getSessionCookieOptions(ctx.req));
         return { success: true } as const;
