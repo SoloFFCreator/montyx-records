@@ -1,49 +1,44 @@
-# MONTYX RECORDS website
+# MONTYX RECORDS
 
-A responsive official website and private release-management dashboard for MONTYX RECORDS. The source is React/TypeScript with an Express/tRPC API, Drizzle ORM and the managed MySQL database. The current deployment project uses managed Webdev services and object storage; Supabase is not provisioned. Migrations are committed under `drizzle/`. Source repository: https://github.com/SoloFFCreator/montyx-records.
+The MONTYX RECORDS site is a responsive React/TypeScript website with an Express/tRPC API, PostgreSQL-backed content, private Supabase Storage for approved artwork, and a private administrator dashboard. The intended live host is the Vercel project connected to this repository. Public URLs currently verified against the Vercel deployment include `https://montyxlabel.cyou`, `https://www.montyxlabel.cyou`, and the Vercel deployment alias. Source: https://github.com/SoloFFCreator/montyx-records.
 
-## Local development
+## Development and deployment
 
-The project uses pinned pnpm 10.18.0. In the managed project environment, `DATABASE_URL`, Manus OAuth settings and managed-storage service variables are supplied by the host. For a schema change, update the Drizzle schema/relations, generate a migration with `pnpm exec drizzle-kit generate`, inspect the SQL, then apply it with `pnpm db:migrate`. Avoid direct `db:push` against the shared managed database. The development server is `pnpm dev`; the production build is `pnpm build`. For a direct production start, `pnpm start` applies pending migrations first and then starts the server. Never add secret values to this repository or browser bundle.
+Use pnpm 10.18.0 and Node 22 or newer. Run `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm test`, and `pnpm build`. `pnpm dev` starts the local Express/Vite application; the Vercel functions import only `server/_core/app.ts`, never the Vite development server. `vercel.json` publishes `dist/public` and sends supported browser routes to the SPA entrypoint. Vercel handles `api/` functions from the repository.
 
-The production container builds without needing the database URL at image-build time. At runtime, it runs the migration ledger and only then starts the app. The initial MONTYX artist profile and `MONTAGEM DA SEDUÇÃO` release are inserted idempotently when the database tables are available. The release begins as a draft with distribution status `pending`; it is not in the public catalogue until an authorized admin verifies details and explicitly publishes it.
+Set server-only Vercel environment variables for `POSTGRES_URL` (or `DATABASE_URL`), `SUPABASE_URL`, and `SUPABASE_SECRET_KEY` (or the legacy `SUPABASE_SERVICE_ROLE_KEY`). Keep service credentials private; never use them in client variables. Set `MONTYX_ADMIN_USERNAME`, `MONTYX_ADMIN_PASSWORD`, `MONTYX_SESSION_SECRET` (a unique random secret of at least 32 bytes), and `PUBLIC_SITE_URL=https://montyxlabel.cyou`. The signing secret is used only server-side. If it is not set, the app accepts a Supabase/Manus server-only signing key as a fallback; prefer the dedicated key. The configured administrator login is managed in Vercel's encrypted environment variables; do not copy credentials into source, documentation, issue reports, or client code. Redeploy after changing environment variables.
 
-## First administrator
+## Supabase schema and migrations
 
-1. Open `/admin` and sign in with the Manus account that should administer the label. This creates an ordinary authenticated user record, not an admin account.
-2. In a trusted project-owner terminal with the project database environment loaded, run `pnpm admin:bootstrap`. Choose the existing account belonging to the label owner and type the requested confirmation phrase. The script refuses to run if an admin already exists, and it cannot create or promote an account through a public website endpoint. In a non-interactive terminal, pass `pnpm admin:bootstrap -- --open-id <existing-oauth-open-id>` after confirming the exact ID in the secure project environment.
-3. Refresh `/admin`. Future elevated-role changes must be performed through a trusted database/operator path; no public signup or public role-management control exists.
+The app uses Supabase PostgreSQL through Drizzle. The `drizzle/schema.ts` file is the typed application schema. Reviewed, additive SQL migrations live under `supabase/migrations/` and are applied to the connected Supabase project using a migration workflow (for example, link the CLI to the existing project, then run `supabase db push`). Do not use MySQL migration files or run database DDL during Vercel function startup. The runtime startup may idempotently seed the MONTYX artist and the initial release only when those slug records are absent.
 
-Retain access to the secure project terminal/database credentials. Do not put OAuth tokens, database URLs or the identity reference in source control or public support messages.
+Private cover images go to the non-public `montyx-artwork` Supabase Storage bucket. The server creates the bucket on the first authorized upload if needed, with JPEG/PNG/WebP and a 3 MB limit. Public artwork is served through a stable application endpoint only after a release referencing its object key has been published. Draft files remain private; never upload unreleased audio masters to this artwork bucket.
 
-## Admin workflow for a release
+## Administrator and release process
 
-In `/admin`, create or open a release, enter title, artist, slug, release type/date, genres and description, then save as a draft. The requested initial entry is pre-seeded with ISRC `NL9KR2145620` and UPC/EAN `8721667789184`; both remain private. Confirm all identifiers, release date, distributor, exact label credit, artist permissions and ownership terms against the actual source records. Upload approved artwork through the authenticated dashboard. Add only real HTTPS platform links, mark only intended verified links `public`, set distribution status only when confirmed, and use “Preview release” in the editor. Only then choose `Published`; the interface asks for an explicit confirmation. Drafts, delivery references, private master notes, audio storage references and contracts are never returned by public endpoints.
+Open `/admin` and sign in with the configured administrator username and password. The server compares credentials without exposing them, throttles repeated failures, issues a secure HTTP-only session cookie, and authorizes every administrator operation server-side. There is no public admin signup or role escalation. Set a high-entropy `MONTYX_SESSION_SECRET` in Vercel to isolate sessions from other service credentials.
 
-Use the catalogue filters and public release page to check the result after publishing. Unconfigured services and social destinations do not render as links. No play counts, audience statistics, reviews or playlist placements are generated.
+Create or edit a release and keep it as a draft while checking title, artist, date, ISRC, UPC/EAN, actual distributor, exact label credit, ownership notes, approved artwork, and destinations against authoritative source records. The seeded `MONTAGEM DA SEDUÇÃO` entry is draft-only and contains ISRC `NL9KR2145620` and UPC/EAN `8721667789184`; these identifiers and all internal delivery/ownership notes remain private. Artists retain master ownership unless a separate written agreement says otherwise. Do not claim a distributor, release status, streaming URL, partnership, certification, statistic, or achievement that has not been verified.
 
-## Contact form
+The five internal publication attestations (rights, metadata, distribution, artwork, and public-link verification) are submitted with the release and checked again on the server. Publishing requires all five, a date, cover art and a label credit; a non-pending status also requires the actual distributor. Public API results are explicit allowlists and omit ISRC, UPC/EAN, delivery references, internal notes, master-ownership notes, audio keys and checklist details. Only verified configured destinations are shown. This application does not deliver audio to Spotify, Apple Music, YouTube, TikTok, or other platforms; distribution remains with the configured actual distributor.
 
-Contact messages are validated and saved to the database inbox at `/admin`. The contact form does not currently send email: no SMTP/provider credentials or label email address were supplied. Success copy explicitly says the message was stored, not emailed. Set a verified contact email in Label settings before exposing a `mailto:` route. If email forwarding is added later, use protected server-side credentials and add delivery/error tracking; do not place credentials in browser variables. The form uses a honeypot and allows at most five messages per rate-limit hash per 15 minutes.
+## Contact and privacy
 
-## Environment variables
+The contact form validates submissions and stores them in the private Supabase inbox. It does not send email until an actual provider and verified label contact address are configured; the UI must not claim messages were emailed. The admin inbox supports status updates. Contact messages contain personal data: retain them only as long as operationally needed and restrict access to authorized administrators.
 
-| Name | Purpose | Source |
+Privacy, Terms, and Rights/Takedown content are editable website-use drafts, not legal advice or claims of regulatory compliance. Review them against the label's actual practices and applicable law before relying on them as legal documents.
+
+## Environment variable reference
+
+| Variable | Purpose | Public? |
 | --- | --- | --- |
-| `DATABASE_URL` | Managed MySQL connection; server-side only | Provisioned by the managed project |
-| `MANUS_PROJECT_ID` | OAuth application ID | Provisioned by the managed project |
-| `MANUS_OAUTH_PORTAL_URL` | Browser authorization portal | Provisioned by the managed project |
-| `MANUS_OAUTH_API_URL` | Server token exchange/user lookup | Provisioned by the managed project |
-| `MANUS_JWT_SECRET` | Platform session validation/signing | Provisioned by the managed project |
-| `MANUS_API_URL` | Managed service endpoint for storage | Provisioned by the managed project |
-| `MANUS_API_KEY` | Server-only storage authorization | Provisioned by the managed project |
-| `PUBLIC_SITE_URL` | Verified HTTPS root origin used for canonical/social metadata and dynamic sitemap/robots output | Set only after the public origin is verified; currently absent. Until then, the safe sitemap is empty and robots disallow crawling. |
-| `PORT` | HTTP listener port | Set by the managed host (default 3000) |
+| `POSTGRES_URL` or `DATABASE_URL` | Supabase PostgreSQL connection string | No |
+| `SUPABASE_URL` | Supabase project API endpoint | Server only in this application |
+| `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` | Server-side private Storage access | No; never expose to browsers |
+| `MONTYX_ADMIN_USERNAME` | Administrator login name | No |
+| `MONTYX_ADMIN_PASSWORD` | Administrator password | No |
+| `MONTYX_SESSION_SECRET` | High-entropy cookie/session signing key | No |
+| `PUBLIC_SITE_URL` | Verified canonical origin for sitemap metadata | Yes, non-secret; server configured |
+| `PORT` | Local/managed server port | Runtime-provided |
 
-`OWNER_OPEN_ID`, SMTP keys and external email-provider keys are not currently configured. Admin bootstrap uses an existing OAuth identity in the database rather than a production password.
-
-## Rights, privacy and operations
-
-The label’s policies are website-use drafts and do not claim legal compliance. Streaming services have their own terms. Artists retain master ownership unless a separate written agreement states otherwise; a label credit does not establish master ownership. Store actual agreements outside the public site and never upload unreleased audio through the public contact form.
-
-The domain `montyxlabel.cyou` currently displays a NicNames parked page. The Webdev project has no custom-domain mapping, and no registrar/DNS credential is available in this session. After the published host provides its expected DNS target, the domain owner must configure those records at the registrar (or provide authorized DNS access); root and `www` HTTPS must then be tested. Until then, the managed host is not the custom-domain site. Do not claim the domain is deployed based solely on source or Preview.
+After a successful code push, verify Vercel's build and deployment events, then test `/`, `/releases`, `/artists/montyx`, `/admin`, `/api/health`, `/api/trpc/content.home`, `/robots.txt`, and `/sitemap.xml` on both the Vercel deployment URL and intended custom domain. A GitHub push by itself does not prove that a production deployment succeeded.

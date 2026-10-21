@@ -13,7 +13,8 @@ const escapeHtml = (text: string) =>
       ]!
   );
 const baseUrl = () =>
-  process.env.PUBLIC_SITE_URL?.trim().replace(/\/$/, "") || "";
+  process.env.PUBLIC_SITE_URL?.trim().replace(/\/$/, "") ||
+  "https://montyxlabel.cyou";
 const staticPages: Record<
   string,
   { title: string; description: string; body: string }

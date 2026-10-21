@@ -8,6 +8,56 @@
       "includeFiles": "dist/**"
     }
   },
+  "rewrites": [
+    {
+      "source": "/admin",
+      "destination": "/api/page?path=/admin"
+    },
+    {
+      "source": "/",
+      "destination": "/api/page?path=/"
+    },
+    {
+      "source": "/releases",
+      "destination": "/api/page?path=/releases"
+    },
+    {
+      "source": "/releases/:slug",
+      "destination": "/api/page?path=/releases/:slug"
+    },
+    {
+      "source": "/about",
+      "destination": "/api/page?path=/about"
+    },
+    {
+      "source": "/artists/:slug",
+      "destination": "/api/page?path=/artists/:slug"
+    },
+    {
+      "source": "/contact",
+      "destination": "/api/page?path=/contact"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/api/page?path=/privacy"
+    },
+    {
+      "source": "/terms",
+      "destination": "/api/page?path=/terms"
+    },
+    {
+      "source": "/rights",
+      "destination": "/api/page?path=/rights"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/api/page?path=/:path*"
+    }
+  ],
   "cleanUrls": true,
   "trailingSlash": false
 }

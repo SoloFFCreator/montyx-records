@@ -1,10 +1,8 @@
 import type { Request, Response } from "express";
-import { createApp } from "../../../server/_core/index";
+import { createApp } from "../../server/_core/app";
 
-let appPromise: ReturnType<typeof createApp> | undefined;
+const app = createApp();
 
-export default async function handler(req: Request, res: Response) {
-  appPromise ??= createApp();
-  const app = await appPromise;
+export default function handler(req: Request, res: Response) {
   return app(req, res);
 }

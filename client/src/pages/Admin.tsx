@@ -213,10 +213,12 @@ export default function Admin() {
         <section className="admin-auth-card">
           <span className="eyebrow red">PRIVATE LABEL AREA</span>
           <h1>Admin access</h1>
-          <p>
-            Sign in with the private label administrator account.
-          </p>
-          {authError && <div className="notice notice-error">Sign-in status could not be checked.</div>}
+          <p>Sign in with the private label administrator account.</p>
+          {authError && (
+            <div className="notice notice-error">
+              Sign-in status could not be checked.
+            </div>
+          )}
           <form
             className="admin-form"
             onSubmit={event => {
@@ -229,10 +231,28 @@ export default function Admin() {
               });
             }}
           >
-            <label>Administrator username<input name="username" autoComplete="username" required /></label>
-            <label>Administrator password<input name="password" type="password" autoComplete="current-password" required /></label>
-            {adminLoginError && <div className="notice notice-error" role="alert">{adminLoginError}</div>}
-            <button className="button button-primary" disabled={adminLoginPending}>
+            <label>
+              Administrator username
+              <input name="username" autoComplete="username" required />
+            </label>
+            <label>
+              Administrator password
+              <input
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+              />
+            </label>
+            {adminLoginError && (
+              <div className="notice notice-error" role="alert">
+                {adminLoginError}
+              </div>
+            )}
+            <button
+              className="button button-primary"
+              disabled={adminLoginPending}
+            >
               {adminLoginPending ? "Signing in…" : "Sign in as administrator"}
             </button>
           </form>
@@ -357,6 +377,9 @@ export default function Admin() {
           .map(item => item.trim())
           .filter(Boolean),
         officialVideoUrl: fields.officialVideoUrl,
+        releaseChecklist: releaseChecklist
+          .filter(item => releaseChecks[item.key])
+          .map(item => item.key),
         links: safeLines(linksText),
       });
     } catch (error) {
@@ -367,8 +390,8 @@ export default function Admin() {
   }
   async function handleArtwork(file?: File) {
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setFormError("Artwork must be 5 MB or smaller.");
+    if (file.size > 3 * 1024 * 1024) {
+      setFormError("Artwork must be 3 MB or smaller.");
       return;
     }
     const reader = new FileReader();
@@ -387,7 +410,7 @@ export default function Admin() {
           coverKey: result.key,
         }));
         setStatus(
-          "Artwork uploaded to managed storage. Save the release to link it."
+          "Artwork uploaded to private Supabase Storage. Save the release to link it."
         );
       } catch (error) {
         setFormError(

@@ -36,7 +36,6 @@ const artworkUrl = z
   .refine(
     value =>
       !value ||
-      value.startsWith("/manus-storage/") ||
       (() => {
         try {
           return new URL(value).protocol === "https:";
@@ -67,6 +66,14 @@ const siteSettingsSchema = z
     homeSubhead: z.string().max(500).optional(),
   })
   .strict();
+const requiredReleaseChecks = [
+  "rights",
+  "metadata",
+  "distribution",
+  "artwork",
+  "links",
+] as const;
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 const releaseSchema = z.object({
   id: z.number().int().positive().optional(),
   artistId: z.number().int().positive(),
@@ -92,6 +99,10 @@ const releaseSchema = z.object({
   isrc: z.string().max(32),
   upcEan: z.string().max(32),
   distributorName: z.string().max(200),
+  releaseChecklist: z
+    .array(z.enum(requiredReleaseChecks))
+    .max(requiredReleaseChecks.length)
+    .default([]),
   deliveryReference: z.string().max(500),
   labelCredit: z.string().max(200),
   masterOwnershipNotes: z.string().max(5000),
@@ -227,6 +238,42 @@ const adminRouter = router({
   saveRelease: adminProcedure
     .input(releaseSchema)
     .mutation(async ({ input }) => {
+      if (input.publicationStatus === "published") {
+        const acknowledged = new Set(input.releaseChecklist);
+        if (requiredReleaseChecks.some(item => !acknowledged.has(item)))
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "Complete the internal release verification checklist before publishing.",
+          });
+        if (
+          !input.releaseDate ||
+          !input.coverUrl.trim() ||
+          !input.labelCredit.trim()
+        )
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "A published release needs a verified release date, approved artwork, and confirmed label credit.",
+          });
+        if (
+          input.coverKey &&
+          !/^artwork\/[a-f0-9-]{20,80}\.(?:jpg|png|webp)$/i.test(input.coverKey)
+        )
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "The artwork storage reference is invalid.",
+          });
+        if (
+          input.distributionStatus !== "pending" &&
+          !input.distributorName.trim()
+        )
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "Enter the actual distributor before publishing a scheduled, live, or taken-down release.",
+          });
+      }
       try {
         return { id: await saveRelease(input) };
       } catch (error) {
@@ -273,7 +320,7 @@ const adminRouter = router({
       z.object({
         fileName: z.string().max(180),
         contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
-        dataBase64: z.string().min(1).max(7_000_000),
+        dataBase64: z.string().min(1).max(4_200_000),
       })
     )
     .mutation(async ({ input }) => {
@@ -325,7 +372,12 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     adminLogin: publicProcedure
-      .input(z.object({ username: z.string().trim().min(1).max(100), password: z.string().min(1).max(200) }))
+      .input(
+        z.object({
+          username: z.string().trim().min(1).max(100),
+          password: z.string().min(1).max(200),
+        })
+      )
       .mutation(async ({ input, ctx }) => {
         const configuredUsername = ENV.adminUsername;
         const configuredPassword = ENV.adminPassword;
@@ -334,14 +386,47 @@ export const appRouter = router({
           const b = Buffer.from(right);
           return a.length === b.length && timingSafeEqual(a, b);
         };
-        if (!configuredUsername || !configuredPassword || !same(input.username, configuredUsername) || !same(input.password, configuredPassword)) {
-          throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid administrator credentials." });
+        const now = Date.now();
+        const attemptKey = createHash("sha256")
+          .update(`${ctx.req.ip || "unknown"}:${input.username.toLowerCase()}`)
+          .digest("hex");
+        const attempts = loginAttempts.get(attemptKey);
+        if (attempts && attempts.resetAt > now && attempts.count >= 8)
+          throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
+            message:
+              "Too many sign-in attempts. Wait a few minutes and try again.",
+          });
+        if (
+          !configuredUsername ||
+          !configuredPassword ||
+          !same(input.username, configuredUsername) ||
+          !same(input.password, configuredPassword)
+        ) {
+          const current =
+            attempts && attempts.resetAt > now
+              ? attempts
+              : { count: 0, resetAt: now + 5 * 60_000 };
+          current.count += 1;
+          loginAttempts.set(attemptKey, current);
+          if (loginAttempts.size > 1000) {
+            for (const [key, record] of loginAttempts)
+              if (record.resetAt <= now) loginAttempts.delete(key);
+          }
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Invalid administrator credentials.",
+          });
         }
+        loginAttempts.delete(attemptKey);
         const openId = `montyx-admin:${createHash("sha256").update(configuredUsername).digest("hex").slice(0, 48)}`;
         // Password authentication must remain available even when the optional
         // content database is not configured. The session is self-contained;
         // admin content operations will report a clear storage error if needed.
-        const token = await sdk.createSessionToken(openId, { name: "Montyx Administrator" });
+        const token = await sdk.createSessionToken(openId, {
+          name: "Montyx Administrator",
+          expiresInMs: 12 * 60 * 60 * 1000,
+        });
         ctx.res.cookie(COOKIE_NAME, token, getSessionCookieOptions(ctx.req));
         return { success: true } as const;
       }),

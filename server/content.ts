@@ -8,6 +8,7 @@ import {
   siteSettings,
 } from "../drizzle/schema";
 import { getDb } from "./db";
+import { storageGetSignedUrl } from "./storage";
 
 export const defaultSettings = {
   labelName: "MONTYX RECORDS",
@@ -68,7 +69,9 @@ export async function listPublicReleases() {
       releaseDate: release.releaseDate,
       genres: release.genres,
       description: release.description,
-      coverUrl: release.coverUrl,
+      coverUrl: release.coverKey
+        ? `/api/artwork?key=${encodeURIComponent(release.coverKey)}`
+        : release.coverUrl,
       featured: release.featured,
       distributionStatus: release.distributionStatus,
       officialVideoUrl: release.officialVideoUrl,
@@ -148,7 +151,9 @@ export async function getPublicRelease(slug: string) {
     releaseDate: release.releaseDate,
     genres: release.genres,
     description: release.description,
-    coverUrl: release.coverUrl,
+    coverUrl: release.coverKey
+      ? `/api/artwork?key=${encodeURIComponent(release.coverKey)}`
+      : release.coverUrl,
     featured: release.featured,
     distributionStatus: release.distributionStatus,
     officialVideoUrl: release.officialVideoUrl,
@@ -164,7 +169,9 @@ export async function getPublicRelease(slug: string) {
       releaseDate: item.releaseDate,
       genres: item.genres,
       description: item.description,
-      coverUrl: item.coverUrl,
+      coverUrl: item.coverKey
+        ? `/api/artwork?key=${encodeURIComponent(item.coverKey)}`
+        : item.coverUrl,
       featured: item.featured,
       distributionStatus: item.distributionStatus,
     }));
@@ -210,7 +217,9 @@ export async function getPublicArtist(slug: string) {
     releaseDate: release.releaseDate,
     genres: release.genres,
     description: release.description,
-    coverUrl: release.coverUrl,
+    coverUrl: release.coverKey
+      ? `/api/artwork?key=${encodeURIComponent(release.coverKey)}`
+      : release.coverUrl,
     featured: release.featured,
     distributionStatus: release.distributionStatus,
   }));
@@ -226,6 +235,22 @@ export async function listPublicArtists() {
     .where(eq(artists.isPublic, true));
 }
 
+export async function isPublishedArtworkKey(key: string) {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db
+    .select({ id: releases.id })
+    .from(releases)
+    .where(
+      and(
+        eq(releases.coverKey, key),
+        eq(releases.publicationStatus, "published")
+      )
+    )
+    .limit(1);
+  return result.length > 0;
+}
+
 export async function listAdminReleases() {
   const db = await getDb();
   if (!db) return [];
@@ -236,6 +261,9 @@ export async function listAdminReleases() {
   return Promise.all(
     rows.map(async row => ({
       ...row,
+      coverUrl: row.coverKey
+        ? await storageGetSignedUrl(row.coverKey).catch(() => "")
+        : row.coverUrl,
       links: await db
         .select()
         .from(platformLinks)
@@ -262,6 +290,7 @@ export async function saveRelease(input: {
   isrc: string;
   upcEan: string;
   distributorName: string;
+  releaseChecklist: string[];
   deliveryReference: string;
   labelCredit: string;
   masterOwnershipNotes: string;
@@ -282,10 +311,11 @@ export async function saveRelease(input: {
   if (id) {
     await db.update(releases).set(data).where(eq(releases.id, id));
   } else {
-    const result = await db.insert(releases).values(data);
-    releaseId = Number(
-      (result as unknown as [{ insertId: number }])[0]?.insertId
-    );
+    const result = await db
+      .insert(releases)
+      .values(data)
+      .returning({ id: releases.id });
+    releaseId = result[0]?.id;
   }
   if (!releaseId) throw new Error("Could not save the release");
   await db.delete(platformLinks).where(eq(platformLinks.releaseId, releaseId));
@@ -347,10 +377,11 @@ export async function saveArtist(input: {
   let artistId = id;
   if (id) await db.update(artists).set(fields).where(eq(artists.id, id));
   else {
-    const result = await db.insert(artists).values(fields);
-    artistId = Number(
-      (result as unknown as [{ insertId: number }])[0]?.insertId
-    );
+    const result = await db
+      .insert(artists)
+      .values(fields)
+      .returning({ id: artists.id });
+    artistId = result[0]?.id;
   }
   if (!artistId) throw new Error("Could not save the artist");
   await db.delete(artistLinks).where(eq(artistLinks.artistId, artistId));
@@ -428,18 +459,19 @@ export async function seedInitialContent() {
   )[0];
   let artistId = artist?.id;
   if (!artistId) {
-    const result = await db.insert(artists).values({
-      name: "MONTYX",
-      slug: "montyx",
-      biography:
-        "MONTYX is the artist project associated with MONTYX RECORDS. The sound moves through Brazilian Funk, Phonk and electronic music. Profile details and official links will be updated as they are confirmed.",
-      genres: ["Brazilian Funk", "Phonk", "Electronic"],
-      photoUrl: null,
-      isPublic: true,
-    });
-    artistId = Number(
-      (result as unknown as [{ insertId: number }])[0]?.insertId
-    );
+    const result = await db
+      .insert(artists)
+      .values({
+        name: "MONTYX",
+        slug: "montyx",
+        biography:
+          "MONTYX is the artist project associated with MONTYX RECORDS. The sound moves through Brazilian Funk, Phonk and electronic music. Profile details and official links will be updated as they are confirmed.",
+        genres: ["Brazilian Funk", "Phonk", "Electronic"],
+        photoUrl: null,
+        isPublic: true,
+      })
+      .returning({ id: artists.id });
+    artistId = result[0]?.id;
   }
   const existing = await db
     .select()
@@ -463,6 +495,7 @@ export async function seedInitialContent() {
       isrc: "NL9KR2145620",
       upcEan: "8721667789184",
       distributorName: "",
+      releaseChecklist: [],
       deliveryReference: "",
       labelCredit:
         "MONTYX RECORDS — verify the exact credit against current distributor metadata before publishing.",
