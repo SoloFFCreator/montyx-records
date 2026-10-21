@@ -142,7 +142,12 @@ export default function Admin() {
       setAdminLoginError("");
       await utils.auth.me.invalidate();
     },
-    onError: error => setAdminLoginError(error.message),
+    onError: error =>
+      setAdminLoginError(
+        error.data?.code === "UNAUTHORIZED"
+          ? "Invalid administrator username or password."
+          : "The admin service is unavailable. Please publish the latest version and try again."
+      ),
     onSettled: () => setAdminLoginPending(false),
   });
   const logout = trpc.auth.logout.useMutation({
@@ -916,7 +921,7 @@ export default function Admin() {
                         <label key={platform}>
                           {platform}
                           <input
-                            type="url"
+                            type="text"
                             inputMode="url"
                             value={directLinkValue(form.linksText, platform)}
                             onChange={event =>

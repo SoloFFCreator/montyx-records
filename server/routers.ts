@@ -24,12 +24,18 @@ import {
 import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
 
-const safeHttpsUrl = z
+const safeExternalUrl = z
   .string()
   .trim()
-  .url()
   .max(1024)
-  .refine(value => new URL(value).protocol === "https:", "Use an HTTPS URL");
+  .transform(value => (/^https?:\/\//i.test(value) ? value : `https://${value}`))
+  .pipe(
+    z.string().url().refine(value => {
+      const protocol = new URL(value).protocol;
+      return protocol === "https:" || protocol === "http:";
+    }, "Use a valid HTTP or HTTPS URL")
+  );
+const safeHttpsUrl = safeExternalUrl;
 const artworkUrl = z
   .string()
   .max(1024)
@@ -91,7 +97,7 @@ const releaseSchema = z.object({
     .nullable(),
   genres: z.array(z.string().trim().min(1).max(80)).max(12),
   description: z.string().max(5000),
-  coverUrl: artworkUrl,
+  coverUrl: artworkUrl.default(""),
   coverKey: z.string().max(512),
   publicationStatus: z.enum(["draft", "published"]),
   distributionStatus: z.enum(["pending", "scheduled", "live", "taken_down"]),
@@ -108,7 +114,7 @@ const releaseSchema = z.object({
   masterOwnershipNotes: z.string().max(5000),
   internalNotes: z.string().max(10000),
   audioMasterKey: z.string().max(512),
-  officialVideoUrl: z.union([safeHttpsUrl, z.literal("")]),
+  officialVideoUrl: z.union([safeHttpsUrl, z.literal("")]).default(""),
   links: z.array(linkSchema).max(20),
 });
 const artistSchema = z.object({
@@ -122,14 +128,14 @@ const artistSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   biography: z.string().max(5000),
   genres: z.array(z.string().trim().min(1).max(80)).max(12),
-  photoUrl: z.union([safeHttpsUrl, z.literal("")]),
+  photoUrl: z.union([safeHttpsUrl, z.literal("")]).default(""),
   isPublic: z.boolean(),
   links: z
     .array(
       z.object({
         platform: z.string().trim().max(80),
         kind: z.enum(["streaming", "social", "video", "other"]),
-        url: safeHttpsUrl,
+  url: safeExternalUrl,
         isPublic: z.boolean(),
       })
     )
