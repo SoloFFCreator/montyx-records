@@ -143,6 +143,7 @@ export default function Admin() {
       setStatus("Release saved to the catalogue.");
       setFormError("");
       await refetch();
+      await utils.content.invalidate();
     },
   });
   const removeRelease = trpc.admin.deleteRelease.useMutation({
@@ -156,6 +157,7 @@ export default function Admin() {
       setStatus("Artist profile saved.");
       setSelectedArtist(null);
       await refetch();
+      await utils.content.invalidate();
     },
   });
   const saveSettings = trpc.admin.saveSettings.useMutation({
