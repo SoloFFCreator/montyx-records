@@ -301,7 +301,7 @@ export async function saveRelease(input: {
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
-  const { id, links, ...fields } = input;
+  const { id, links, releaseChecklist: _releaseChecklist, ...fields } = input;
   const data = {
     ...fields,
     releaseDate: fields.releaseDate || null,
