@@ -2,11 +2,7 @@ import express from "express";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import {
-  isPublishedArtworkKey,
-  listPublicArtists,
-  listPublicReleases,
-} from "../content";
+import { isPublishedArtworkKey } from "../content";
 import { storageDownloadPublishedObject } from "../storage";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -14,16 +10,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { renderSeoDocument } from "./seo";
 import { publicPlatformScript } from "./publicConfig";
 
-const sitemapPages = [
-  "/",
-  "/releases",
-  "/about",
-  "/artists/montyx",
-  "/contact",
-  "/privacy",
-  "/terms",
-  "/rights",
-];
+const sitemapPages = ["/", "/contact", "/privacy", "/terms", "/rights"];
 const xmlEscape = (value: string) =>
   value
     .replaceAll("&", "&amp;")
@@ -42,7 +29,7 @@ function publicOrigin() {
     )
       return parsed.origin;
   } catch {
-    // Use the known custom-domain alias below if an invalid value was configured.
+    // Fall back to the verified custom-domain origin below.
   }
   return "https://montyxlabel.cyou";
 }
@@ -123,43 +110,20 @@ export function createApp() {
       return res.status(404).end();
     }
   });
-  app.get("/api/sitemap", async (_req, res) => {
-    try {
-      const origin = publicOrigin();
-      const [artists, releases] = await Promise.all([
-        listPublicArtists(),
-        listPublicReleases(),
-      ]);
-      const paths = [
-        ...sitemapPages,
-        ...artists.map(artist => `/artists/${encodeURIComponent(artist.slug)}`),
-        ...releases.map(
-          release => `/releases/${encodeURIComponent(release.slug)}`
-        ),
-      ];
-      const uniquePaths = [...new Set(paths)];
-      const urls = uniquePaths
-        .map(path => `<url><loc>${xmlEscape(`${origin}${path}`)}</loc></url>`)
-        .join("");
-      res
-        .set({
-          "Cache-Control": "public, max-age=3600",
-          "X-Robots-Tag": "noindex",
-        })
-        .type("application/xml")
-        .send(
-          `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`
-        );
-    } catch (error) {
-      console.error(
-        "[SEO] Sitemap generation failed:",
-        error instanceof Error ? error.message : "unknown error"
+  app.get("/api/sitemap", (_req, res) => {
+    const origin = publicOrigin();
+    const urls = sitemapPages
+      .map(path => `<url><loc>${xmlEscape(`${origin}${path}`)}</loc></url>`)
+      .join("");
+    res
+      .set({
+        "Cache-Control": "public, max-age=3600",
+        "X-Robots-Tag": "noindex",
+      })
+      .type("application/xml")
+      .send(
+        `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`
       );
-      res
-        .status(503)
-        .type("text/plain")
-        .send("Sitemap temporarily unavailable");
-    }
   });
   registerOAuthRoutes(app);
   app.use(

@@ -1,21 +1,18 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Route, Switch } from "wouter";
+import { Redirect, Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { SiteFrame } from "@/components/SiteLayout";
 import Admin from "./pages/Admin";
-import About from "./pages/About";
-import Artist from "./pages/Artist";
 import Contact from "./pages/Contact";
 import Home from "./pages/Home";
 import Legal from "./pages/Legal";
 import NotFound from "./pages/NotFound";
-import ReleaseDetail from "./pages/ReleaseDetail";
-import Releases from "./pages/Releases";
 
 function Public({ children }: { children: React.ReactNode }) {
   return <SiteFrame>{children}</SiteFrame>;
 }
+
 function Router() {
   return (
     <Switch>
@@ -28,37 +25,15 @@ function Router() {
           </Public>
         )}
       />
-      <Route
-        path="/releases"
-        component={() => (
-          <Public>
-            <Releases />
-          </Public>
-        )}
-      />
+      <Route path="/releases" component={() => <Redirect to="/#platforms" />} />
       <Route
         path="/releases/:slug"
-        component={() => (
-          <Public>
-            <ReleaseDetail />
-          </Public>
-        )}
+        component={() => <Redirect to="/#platforms" />}
       />
-      <Route
-        path="/about"
-        component={() => (
-          <Public>
-            <About />
-          </Public>
-        )}
-      />
+      <Route path="/about" component={() => <Redirect to="/#about" />} />
       <Route
         path="/artists/:slug"
-        component={() => (
-          <Public>
-            <Artist />
-          </Public>
-        )}
+        component={() => <Redirect to="/#about" />}
       />
       <Route
         path="/contact"

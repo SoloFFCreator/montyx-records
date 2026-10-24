@@ -8,8 +8,8 @@ export default function Contact() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   usePageMeta(
-    "Contact MONTYX RECORDS",
-    "Contact the MONTYX RECORDS team for release, artist, rights and general enquiries."
+    "Contact MONTYX RECORDS Distribution",
+    "Start a conversation with MONTYX RECORDS about music distribution, artist, rights or general enquiries."
   );
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,7 +39,7 @@ export default function Contact() {
       <PageIntro
         kicker="GET IN TOUCH"
         title="Start a conversation."
-        intro="For music, artist, rights, or general enquiries, send a note to the label."
+        intro="For music distribution, artist, rights, or general enquiries, send a note to the label."
       />
       <section className="contact-layout content-width">
         <div className="contact-copy">

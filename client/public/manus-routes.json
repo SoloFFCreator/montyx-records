@@ -1,1 +1,13 @@
-{"routes":[{"path":"/","title":"MONTYX RECORDS — Independent Sound. No Limits."},{"path":"/releases","title":"Releases — MONTYX RECORDS"},{"path":"/releases/:slug","title":"Release — MONTYX RECORDS"},{"path":"/about","title":"About — MONTYX RECORDS"},{"path":"/artists/:slug","title":"Artist — MONTYX RECORDS"},{"path":"/contact","title":"Contact — MONTYX RECORDS"},{"path":"/privacy","title":"Privacy Policy — MONTYX RECORDS"},{"path":"/terms","title":"Terms — MONTYX RECORDS"},{"path":"/rights","title":"Copyright & Rights — MONTYX RECORDS"},{"path":"/admin","title":"Admin — MONTYX RECORDS"}]}
+{
+  "routes": [
+    {
+      "path": "/",
+      "title": "MONTYX RECORDS Distribution — Music from Nepal to the world"
+    },
+    { "path": "/contact", "title": "Contact MONTYX RECORDS Distribution" },
+    { "path": "/privacy", "title": "Privacy Policy — MONTYX RECORDS" },
+    { "path": "/terms", "title": "Terms — MONTYX RECORDS" },
+    { "path": "/rights", "title": "Copyright & Rights — MONTYX RECORDS" },
+    { "path": "/admin", "title": "Private Admin — MONTYX RECORDS" }
+  ]
+}

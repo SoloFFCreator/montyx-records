@@ -8,6 +8,28 @@
       "includeFiles": "dist/**"
     }
   },
+  "redirects": [
+    {
+      "source": "/releases",
+      "destination": "/#platforms",
+      "permanent": true
+    },
+    {
+      "source": "/releases/:slug",
+      "destination": "/#platforms",
+      "permanent": true
+    },
+    {
+      "source": "/about",
+      "destination": "/#about",
+      "permanent": true
+    },
+    {
+      "source": "/artists/:slug",
+      "destination": "/#about",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/admin",
@@ -16,22 +38,6 @@
     {
       "source": "/",
       "destination": "/api/page?path=/"
-    },
-    {
-      "source": "/releases",
-      "destination": "/api/page?path=/releases"
-    },
-    {
-      "source": "/releases/:slug",
-      "destination": "/api/page?path=/releases/:slug"
-    },
-    {
-      "source": "/about",
-      "destination": "/api/page?path=/about"
-    },
-    {
-      "source": "/artists/:slug",
-      "destination": "/api/page?path=/artists/:slug"
     },
     {
       "source": "/contact",

@@ -1,46 +1,50 @@
-# MONTYX RECORDS — implementation plan
+# MONTYX RECORDS Distribution — redesign plan (draft)
+
+**Status: awaiting the owner's confirmation before application implementation.** The official-site reference review is in `docs/distribution-reference-review.md`.
 
 ## Product and architecture
 
-Build the complete official, responsive MONTYX RECORDS site in the initialized managed Webdev project. The project is React 19 + TypeScript + Vite, Express, tRPC, Drizzle, and the provisioned managed MySQL database. The database is the supported backend in this environment; Supabase is not provisioned. Keep public content and internal administration on the same server, with public reads restricted to published content and write procedures guarded by an authenticated administrator role. Use the supplied Manus OAuth flow for identity, and do not offer public account creation. Keep secrets server-side.
+Replace the public homepage with a single, scroll-first distribution landing page for MONTYX RECORDS, using the existing brand rather than inventing a separate product identity. The page will explain the offer, provide anchored navigation, display a carefully selected set of supported streaming/social destinations, describe a simple release journey, answer only policy-safe questions, and lead to the existing contact/inquiry route. Its structure draws on common category patterns observed across six official distributor sites; it will not reproduce any one company's copy, artwork, logo, signature composition, buttons, plan cards, or trade dress.
 
-Model artists, releases, platform links, settings, and contact messages using committed, additive Drizzle SQL migrations. Seed only the requested MONTYX release as a draft, without making its verification-sensitive distributor, label credit, identifiers, links, artwork, or status public. Public release pages will omit unconfigured streaming links and private metadata. The owner/admin dashboard will manage drafts, publication state, release metadata, platform links, artwork references, site settings, and the private contact inbox. Artwork uploads go through a server-authorized managed-storage path and store stable asset references. Contact form submissions persist to the database with validation and spam controls; no email address or SMTP integration is assumed. Document the missing email-delivery setup and offer a mail link only when the owner has supplied an address.
+Use the current React 19, TypeScript, Vite and Express/tRPC application and keep the existing Supabase PostgreSQL, Storage and private admin integration. Preserve `/admin`, `/contact`, `/privacy`, `/terms`, and `/rights`. The public catalogue, artist profile and label-story pages will no longer be in the primary navigation; legacy `/releases`, `/releases/:slug`, `/about`, and `/artists/:slug` requests should route visitors to relevant sections of the new landing page rather than deleting any database records. Keep private admin access server-authorized and keep the contact form's existing stored-in-inbox behavior and honest email-delivery notice. No new schema or data deletion is part of this redesign.
 
-Serve the requested routes: `/`, `/releases`, `/releases/:slug`, `/about`, `/artists/montyx`, `/contact`, `/privacy`, `/terms`, `/rights`, and `/admin`, including a not-found state. Use route-aware metadata, sitemap and robots files, responsive social metadata, a custom favicon, and meaningful initial HTML for public routes. Maintain internal links, search/filter/sort, and safe share links. Keep admin-only views out of public search.
+The landing page will have a benefit-led hero; an accessible destination-mark section; a concise explanation of distribution; a three-step release path; an artist-first statement grounded in the existing master-ownership policy; a compact FAQ that avoids unconfirmed operational details; and a closing contact CTA. The user has stated that MONTYX distributes to every popular streaming platform and more. A representative group of current official marks may identify supported destinations, but the exhaustive coverage wording, exact current partner/destination list, availability by territory, and permitted use of each mark must be confirmed before those claims are published. Brand marks identify destinations only and will not imply endorsement.
 
-The Webdev server capability and managed database are enabled. Package deployment through the managed server/container route after a successful checkpoint; test the built server and health endpoint. Publish using the available managed host, then configure the requested domain only if the project dashboard exposes a supported mapping and the necessary registrar/DNS access is available. The domain currently resolves to a parked NicNames page; no registrar credentials or domain mapping are present. Do not claim custom-domain or HTTPS success before testing.
+Do not invent MONTYX pricing, royalty shares, payment schedules, release delivery times, analytics, named clients/artists, usage statistics, testimonials, certifications, partnerships, guarantees, or direct platform integrations. Do not promise a signup/account creation path that does not exist; use the real contact form as the conversion route unless the owner supplies a working distribution onboarding URL.
 
-## GitHub delivery
+For the hero, use a custom, abstract signal/orbit visual implemented as a lazy-loaded React Three Fiber/Three.js scene. Framer Motion is already installed and can provide restrained interface transitions. Defer WebGL work until needed; keep the destination names and page meaning in accessible HTML; provide a lightweight static/CSS fallback when WebGL is unavailable, on small/mobile devices as needed, or when reduced motion is requested. Do not use the downloaded stock-search images as website art because a reuse license was not established.
 
-Use the explicitly selected existing public repository `SoloFFCreator/minimax-code-termux`. Replace its tracked project files on `main` with the complete site source, while preserving the existing commit history and using a normal non-forced push. Rename the repository slug to `montyx-records` (the human-readable title is MONTYX RECORDS). The web project remains in its managed project workspace and is deployed through its supported host; GitHub receives the website source, not secrets or generated database contents.
+Use route-aware server-rendered initial metadata and a text-bearing SEO fallback for the landing page. Update the Vercel route mapping, SPA behavior, `robots.txt`, sitemap and `manus-routes.json` to reflect the new public page set and preserved admin/legal/contact routes. Keep canonical and social URLs on the verified `https://montyxlabel.cyou` origin. Retain the deployed Vercel project, current GitHub repository `SoloFFCreator/montyx-records`, Supabase project and all production environment values; no new secrets or provider changes are planned. Build and deploy the approved source to the existing Vercel production site after testing.
 
 ## Design
 
-- **Design movement:** contemporary electronic-label editorial design with restrained industrial/club-culture cues.
-- **Core principles:** confident hierarchy; spacious dark composition; real information only; mobile-first usability.
-- **Color philosophy:** near-black and graphite give the music room; a deep crimson signal marks key actions and moments; white and cool-gray type preserve clarity.
-- **Layout paradigm:** wide editorial bands and asymmetric image/text splits, followed by compact release rows and a deliberate catalogue grid.
-- **Signature elements:** a custom angular M/X monogram; thin crimson waveform/divider strokes; small tracked uppercase metadata labels.
-- **Interaction philosophy:** links and controls feel precise and direct; obvious focus rings, clear statuses, and no fake or disabled-as-if-live actions.
-- **Animation:** short opacity/position transitions and subtle waveform movement only; disable nonessential motion with `prefers-reduced-motion`.
-- **Typography system:** a strong geometric display face with a neutral sans-serif body stack; oversized condensed-feeling uppercase headlines, readable body copy, and carefully spaced metadata. Preserve system-font fallbacks for slow connections.
-- **Brand essence:** independent electronic sound from Nepal, built with its own identity; bold, exacting, independent.
-- **Brand voice:** direct and unembellished. Examples: “INDEPENDENT SOUND. NO LIMITS.” and “New music, when it’s ready to be heard.”
-- **Wordmark & logo:** custom drawn angular M/X monogram paired with a purpose-spaced MONTYX RECORDS wordmark; do not rely on generated lettering.
-- **Signature brand color:** signal crimson `#E11D35`.
+**Three candidate directions:** “Signal Atlas / sonic cartography” (0.08); “Analog mastering suite” (0.06); “Monumental live-room brutalism” (0.04). **Chosen:** Signal Atlas / sonic cartography.
+
+- **Design movement:** contemporary electronic editorial design, filtered through signal mapping and restrained industrial precision.
+- **Core principles:** artist-first clarity; visible destination coverage; claims only when supplied or verified; high-impact visual motion with accessible fallbacks.
+- **Color philosophy:** preserve MONTYX’s near-black and graphite foundation, warm off-white typography, and signature signal crimson. Avoid adopting another service's recognizable accent palette or layout treatment.
+- **Layout paradigm:** an asymmetric text-and-orbit hero followed by wide, intentionally spaced horizontal chapters. Use a compact logo field and staggered editorial bands rather than a generic centered template or dense card grid.
+- **Signature elements:** a custom M/X monogram; orbiting destination nodes around an abstract release object; thin crimson paths/topographic contours that guide the eye from creation to delivery.
+- **Interaction philosophy:** anchor navigation stays direct; destination names remain readable without motion; CTAs have a clear action; no fake login, disabled-as-live buttons, modal traps, or auto-playing audio.
+- **Animation:** a slow, low-amplitude 3D rotation with restrained node motion; no scroll-jacking or essential information hidden in animation. Lazy-load the WebGL scene, respect `prefers-reduced-motion`, stop unnecessary work when offscreen, and use a static fallback.
+- **Typography system:** reuse Space Grotesk for high-contrast display headlines and DM Sans for readable body and metadata; preserve current system fallbacks and loading behavior.
+- **Brand essence:** distribution for independent music moving from Nepal toward listeners wherever they listen; direct, independent, forward.
+- **Brand voice:** clear and unembellished. Example lines: “Your music. More places to be heard.” and “From Nepal. Out into the world.”
+- **Wordmark & logo:** reuse the existing angular M/X monogram and MONTYX RECORDS wordmark; add a small “DISTRIBUTION” descriptor without making a new company or third-party brand appear.
+- **Signature brand color:** MONTYX signal crimson `#E11D35`.
 
 ## Project structure
 
-- `client/src/pages/` — public route pages and admin dashboard.
-- `client/src/components/` — shared navigation, footer, release cards, forms, and admin controls.
-- `client/src/lib/` — typed tRPC client and safe browser helpers.
-- `client/public/` — original visual assets, favicon, route manifest, and gateway-compatible small static assets.
-- `server/_core/` — existing Express, OAuth, and server runtime.
-- `server/routers.ts` — authenticated and public tRPC procedures.
-- `server/db.ts` and `drizzle/` — database queries, schema, and committed migrations.
-- `scripts/` — controlled seed/bootstrap and operational commands with no embedded secrets.
-- Root docs — deployment, environment, migrations, first-admin bootstrap, content workflow, privacy/rights/terms text, and this implementation plan.
+- `client/src/pages/Home.tsx` — one-page landing composition and content sections.
+- `client/src/components/distribution/` — landing header, destination-logo field, release steps, FAQs, closing CTA, and lazily loaded 3D visual.
+- `client/src/lib/` — destination icon metadata, accessible link helpers, and existing tRPC client.
+- `client/src/pages/Contact.tsx`, `Legal.tsx`, and `Admin.tsx` — preserved contact, legal, and authenticated administration routes.
+- `client/src/App.tsx` and `client/public/manus-routes.json` — public routes and static page manifest, including deliberate legacy-route handling.
+- `client/index.html` and `server/_core/seo.ts` — public shell, route-specific initial metadata and meaningful non-JavaScript fallback content.
+- `client/public/` and `vercel.json` — favicon, robots/sitemap delivery and Vercel route/redirect behavior.
+- `server/`, `drizzle/`, and `supabase/` — existing APIs, data schema and migrations, preserved without data deletion or new DDL for this landing-page scope.
+- `docs/distribution-reference-review.md` — cited UX research behind the original design direction.
 
 ## Material constraints
 
-The domain `montyxlabel.cyou` currently shows a NicNames parked page; the active Webdev project has no deployment or custom-domain mapping yet. The account/DNS provider is not connected. External email delivery credentials are absent. The contact backend will still receive and persist form submissions; email delivery and the custom domain will remain explicitly unverified until owner setup is available. Never expose service-role credentials, unreleased audio, private notes, unverified release metadata, or invented business claims.
+The actual current DSP delivery catalog and logo-use permissions have not yet been independently supplied; verify both before publishing an exhaustive network claim. There is no confirmed distribution signup URL, pricing, royalty/payout policy, delivery SLA, analytics feature, or verified customer proof; the landing page will not make those claims. Email delivery is not configured; continue to report that the existing inquiry form stores submissions but does not email them. Third-party streaming marks are trademarks of their respective owners and their display must not imply sponsorship or endorsement. Changes stay within the existing GitHub/Vercel/Supabase setup and must preserve all existing administrator credentials, project environment values and user data.

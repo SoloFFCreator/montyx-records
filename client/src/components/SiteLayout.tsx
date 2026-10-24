@@ -64,9 +64,10 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
     staleTime: 60_000,
   });
   const nav = [
-    ["Releases", "/releases"],
-    ["About", "/about"],
-    ["Artist", "/artists/montyx"],
+    ["Destinations", "/#platforms"],
+    ["How it works", "/#process"],
+    ["For artists", "/#about"],
+    ["FAQ", "/#faq"],
     ["Contact", "/contact"],
   ] as const;
   return (
@@ -85,8 +86,8 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
           </nav>
-          <Link className="header-cta" href="/releases">
-            Explore music <span aria-hidden="true">↗</span>
+          <Link className="header-cta" href="/contact">
+            Talk distribution <span aria-hidden="true">↗</span>
           </Link>
           <details className="mobile-menu">
             <summary aria-label="Open navigation">
@@ -113,11 +114,11 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
             </p>
           </div>
           <div className="footer-links">
-            <span className="eyebrow">Explore</span>
-            <Link href="/releases">Releases</Link>
-            <Link href="/about">About the label</Link>
-            <Link href="/artists/montyx">MONTYX</Link>
-            <Link href="/contact">Contact</Link>
+            <span className="eyebrow">Distribution</span>
+            <a href="/#platforms">Destinations</a>
+            <a href="/#process">How it works</a>
+            <a href="/#about">Artist ownership</a>
+            <Link href="/contact">Start a conversation</Link>
           </div>
           <div className="footer-links">
             <span className="eyebrow">Information</span>
@@ -157,7 +158,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
         </div>
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} MONTYX RECORDS</span>
-          <span>Independent by design. Nepal.</span>
+          <span>Independent distribution · Nepal</span>
           <Link href="/admin">Label admin</Link>
         </div>
       </footer>
@@ -197,23 +198,44 @@ export function ReleaseCard({ release }: { release: any }) {
       <Link href={`/releases/${release.slug}`} className="release-card-main">
         <div className="release-art">
           {release.coverUrl ? (
-            <img src={release.coverUrl} alt={`${release.title} cover artwork`} loading="lazy" />
+            <img
+              src={release.coverUrl}
+              alt={`${release.title} cover artwork`}
+              loading="lazy"
+            />
           ) : (
             <div className="art-empty">
               <BrandMark compact />
-              <span>ARTWORK<br />TO BE ADDED</span>
+              <span>
+                ARTWORK
+                <br />
+                TO BE ADDED
+              </span>
             </div>
           )}
-          <span className="art-open" aria-hidden="true">↗</span>
+          <span className="art-open" aria-hidden="true">
+            ↗
+          </span>
         </div>
         <div className="release-card-meta">
-          <span>{release.releaseType} <i>·</i> {release.releaseDate || "Date to be confirmed"}</span>
+          <span>
+            {release.releaseType} <i>·</i>{" "}
+            {release.releaseDate || "Date to be confirmed"}
+          </span>
           <span>{release.genres?.[0] || "Electronic"}</span>
         </div>
         <h3>{release.title}</h3>
         <p>{release.artist?.name ?? "MONTYX"}</p>
       </Link>
-      {release.links?.length > 0 && <div className="release-card-links">{release.links.map((link: any) => <a key={link.id} href={link.url} target="_blank" rel="noreferrer">{link.platform} ↗</a>)}</div>}
+      {release.links?.length > 0 && (
+        <div className="release-card-links">
+          {release.links.map((link: any) => (
+            <a key={link.id} href={link.url} target="_blank" rel="noreferrer">
+              {link.platform} ↗
+            </a>
+          ))}
+        </div>
+      )}
     </article>
   );
 }
