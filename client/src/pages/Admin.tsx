@@ -87,11 +87,23 @@ const linkText = (
   links: Array<{ platform: string; url: string; isPublic: boolean }> = []
 ) =>
   links
-    .map(
-      link =>
-        `${link.platform}|${link.url}|${link.isPublic ? "public" : "private"}`
-    )
+    .map(link => `${link.platform}|${link.url}|${link.isPublic ? "public" : "private"}`)
     .join("\n");
+
+const directLinkPlatforms = ["Spotify", "Apple Music", "YouTube Music", "SoundCloud"];
+
+const updateDirectLink = (text: string, platform: string, url: string) => {
+  const links = safeLines(text).filter(
+    link => link.platform.toLowerCase() !== platform.toLowerCase()
+  );
+  if (url.trim()) links.push({ platform, url: url.trim(), isPublic: true });
+  return linkText(links);
+};
+
+const directLinkValue = (text: string, platform: string) =>
+  safeLines(text).find(
+    link => link.platform.toLowerCase() === platform.toLowerCase()
+  )?.url ?? "";
 
 export default function Admin() {
   const {
@@ -143,6 +155,7 @@ export default function Admin() {
       setStatus("Release saved to the catalogue.");
       setFormError("");
       await refetch();
+      await utils.content.invalidate();
     },
   });
   const removeRelease = trpc.admin.deleteRelease.useMutation({
@@ -156,6 +169,7 @@ export default function Admin() {
       setStatus("Artist profile saved.");
       setSelectedArtist(null);
       await refetch();
+      await utils.content.invalidate();
     },
   });
   const saveSettings = trpc.admin.saveSettings.useMutation({
@@ -890,18 +904,65 @@ export default function Admin() {
                     />
                     {upload.isPending && <span>Uploading securely…</span>}
                   </label>
-                  <label className="span-two">
-                    Streaming destinations — one per line:
-                    `platform|https://url|public` or `private`
-                    <textarea
-                      rows={4}
-                      value={form.linksText}
-                      onChange={event =>
-                        setForm({ ...form, linksText: event.target.value })
-                      }
-                      placeholder="Spotify|https://...|public"
-                    />
-                  </label>
+                  <div className="span-two direct-links-field">
+                    <div>
+                      <b>Official listening links</b>
+                      <small className="muted small-note">
+                        Add the direct public URL for each platform. Empty boxes stay hidden on the public page.
+                      </small>
+                    </div>
+                    <div className="direct-links-grid">
+                      {directLinkPlatforms.map(platform => (
+                        <label key={platform}>
+                          {platform}
+                          <input
+                            type="url"
+                            inputMode="url"
+                            value={directLinkValue(form.linksText, platform)}
+                            onChange={event =>
+                              setForm({
+                                ...form,
+                                linksText: updateDirectLink(
+                                  form.linksText,
+                                  platform,
+                                  event.target.value
+                                ),
+                              })
+                            }
+                            placeholder={`https://${platform.toLowerCase().replaceAll(" ", "")}.com/...`}
+                          />
+                        </label>
+                      ))}
+                      <label>
+                        Other platform
+                        <input
+                          type="url"
+                          inputMode="url"
+                          value={
+                            safeLines(form.linksText).find(
+                              link =>
+                                !directLinkPlatforms.some(
+                                  platform =>
+                                    platform.toLowerCase() ===
+                                    link.platform.toLowerCase()
+                                )
+                            )?.url ?? ""
+                          }
+                          onChange={event =>
+                            setForm({
+                              ...form,
+                              linksText: updateDirectLink(
+                                form.linksText,
+                                "Other",
+                                event.target.value
+                              ),
+                            })
+                          }
+                          placeholder="https://..."
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </div>
                 {showPreview && (
                   <section
