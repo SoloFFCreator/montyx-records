@@ -55,12 +55,6 @@ const staticPages: Record<
     description: "Music ownership and rights information for MONTYX RECORDS.",
     body: "Music rights depend on applicable ownership and licensing agreements. Artists retain master ownership unless a separate written agreement states otherwise.",
   },
-  "/admin": {
-    title: "Private Admin — MONTYX RECORDS",
-    description:
-      "Private label administration for authorized MONTYX RECORDS account holders.",
-    body: "This area is restricted to an authenticated label administrator. Public visitors cannot create administrator accounts.",
-  },
 };
 
 const landingSections = `
@@ -102,7 +96,7 @@ export async function renderSeoDocument(template: string, rawUrl: string) {
     image
       ? `<meta property="og:image" content="${escapeHtml(image)}" /><meta name="twitter:image" content="${escapeHtml(image)}" />`
       : "",
-    status === 404 || pathname === "/admin"
+    status === 404
       ? `<meta name="robots" content="noindex,nofollow" />`
       : "",
   ]

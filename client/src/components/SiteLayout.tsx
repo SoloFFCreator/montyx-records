@@ -9,13 +9,14 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
       className={`brand ${compact ? "brand-compact" : ""}`}
       aria-label="MONTYX RECORDS home"
     >
-      <svg className="brand-mark" viewBox="0 0 48 42" aria-hidden="true">
-        <path
-          d="M3 38V4h8l13 18L37 4h8v34h-9V18L24 34 12 18v20z"
-          fill="currentColor"
-        />
-        <path d="M38 4h7v34h-7z" fill="#e11d35" />
-      </svg>
+      <img
+        className="brand-mark"
+        src="/montyx-mark.png"
+        alt=""
+        width="48"
+        height="48"
+        decoding="async"
+      />
       <span className="brand-type">
         <b>MONTYX</b>
         <small>RECORDS</small>
@@ -125,13 +126,9 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
             <Link href="/rights">Copyright & rights</Link>
-            {settings?.contactEmail ? (
-              <a href={`mailto:${settings.contactEmail}`}>
-                {settings.contactEmail}
-              </a>
-            ) : (
-              <span className="muted">Contact email not configured</span>
-            )}
+            <a href="mailto:support@montyxlabel.cyou">
+              support@montyxlabel.cyou
+            </a>
           </div>
           <div className="footer-social">
             {settings?.instagramUrl && (
@@ -159,7 +156,6 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} MONTYX RECORDS</span>
           <span>Independent distribution · Nepal</span>
-          <Link href="/admin">Label admin</Link>
         </div>
       </footer>
     </div>

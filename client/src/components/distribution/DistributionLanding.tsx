@@ -83,6 +83,22 @@ function DeferredSignal() {
 
   useEffect(() => {
     if (prefersReducedMotion !== false) return;
+    const connection = (navigator as Navigator & {
+      connection?: { saveData?: boolean; effectiveType?: string };
+      deviceMemory?: number;
+    }).connection;
+    const device = navigator as Navigator & { deviceMemory?: number };
+    const smallOrTouch = window.matchMedia(
+      "(max-width: 650px), (pointer: coarse)"
+    ).matches;
+    const constrained =
+      smallOrTouch ||
+      connection?.saveData === true ||
+      ["slow-2g", "2g", "3g"].includes(connection?.effectiveType ?? "") ||
+      (device.deviceMemory !== undefined && device.deviceMemory <= 4) ||
+      (navigator.hardwareConcurrency !== undefined &&
+        navigator.hardwareConcurrency <= 4);
+    if (constrained) return;
     const timer = window.setTimeout(() => setReady(true), 500);
     return () => window.clearTimeout(timer);
   }, [prefersReducedMotion]);

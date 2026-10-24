@@ -3,7 +3,6 @@ import { trpc } from "@/lib/trpc";
 import { PageIntro, usePageMeta } from "@/components/SiteLayout";
 
 export default function Contact() {
-  const { data: settings } = trpc.content.settings.useQuery();
   const mutation = trpc.content.contact.useMutation();
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
@@ -50,22 +49,12 @@ export default function Contact() {
             for the label team; email notifications are not currently
             configured.
           </p>
-          {settings?.contactEmail ? (
-            <div className="contact-address">
-              <span className="eyebrow">DIRECT EMAIL</span>
-              <a href={`mailto:${settings.contactEmail}`}>
-                {settings.contactEmail} ↗
-              </a>
-            </div>
-          ) : (
-            <div className="setup-note">
-              <span className="eyebrow">CONTACT EMAIL</span>
-              <p>
-                The label email is not configured yet. Set it in the admin
-                dashboard before publishing an address here.
-              </p>
-            </div>
-          )}
+          <div className="contact-address">
+            <span className="eyebrow">SUPPORT EMAIL</span>
+            <a href="mailto:support@montyxlabel.cyou">
+              support@montyxlabel.cyou ↗
+            </a>
+          </div>
           <LinkRights />
         </div>
         <form className="contact-form" onSubmit={submit}>

@@ -1,6 +1,6 @@
 // Platform values are read at use time. See the Webdev service/authentication skills.
 export const ENV = {
-  // Never derive the session signing key from the administrator password.
+  // Session signing keys are configured independently of user credentials.
   get appId() {
     return process.env.MONTYX_APP_ID ?? "montyx-records";
   },
@@ -23,12 +23,6 @@ export const ENV = {
   // Preserve the legacy hint when supplied; otherwise roles remain application data.
   get ownerOpenId() {
     return process.env.OWNER_OPEN_ID ?? "";
-  },
-  get adminUsername() {
-    return process.env.MONTYX_ADMIN_USERNAME ?? "";
-  },
-  get adminPassword() {
-    return process.env.MONTYX_ADMIN_PASSWORD ?? "";
   },
   get isProduction() {
     return process.env.NODE_ENV === "production";

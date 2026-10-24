@@ -2,12 +2,23 @@
   "routes": [
     {
       "path": "/",
-      "title": "MONTYX RECORDS Distribution — Music from Nepal to the world"
+      "title": "MONTYX RECORDS Distribution \u2014 Music from Nepal to the world"
     },
-    { "path": "/contact", "title": "Contact MONTYX RECORDS Distribution" },
-    { "path": "/privacy", "title": "Privacy Policy — MONTYX RECORDS" },
-    { "path": "/terms", "title": "Terms — MONTYX RECORDS" },
-    { "path": "/rights", "title": "Copyright & Rights — MONTYX RECORDS" },
-    { "path": "/admin", "title": "Private Admin — MONTYX RECORDS" }
+    {
+      "path": "/contact",
+      "title": "Contact MONTYX RECORDS Distribution"
+    },
+    {
+      "path": "/privacy",
+      "title": "Privacy Policy \u2014 MONTYX RECORDS"
+    },
+    {
+      "path": "/terms",
+      "title": "Terms \u2014 MONTYX RECORDS"
+    },
+    {
+      "path": "/rights",
+      "title": "Copyright & Rights \u2014 MONTYX RECORDS"
+    }
   ]
 }

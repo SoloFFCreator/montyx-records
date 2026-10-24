@@ -64,15 +64,15 @@ export default function DashboardLayout({
               Sign in to continue
             </h1>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Access to this dashboard requires authentication. Continue to launch the login flow.
+              For assistance, contact MONTYX RECORDS support.
             </p>
           </div>
           <Button
-            onClick={() => window.location.assign("/admin")}
+            onClick={() => window.location.assign("mailto:support@montyxlabel.cyou")}
             size="lg"
             className="w-full shadow-lg hover:shadow-xl transition-all"
           >
-            Open admin sign-in
+            Contact support
           </Button>
         </div>
       </div>

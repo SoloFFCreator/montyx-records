@@ -1,10 +1,10 @@
 import { COOKIE_NAME } from "@shared/const";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
-import { sdk } from "./_core/sdk";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
+import { ENV } from "./_core/env";
 import { upsertUser } from "./db";
 import {
   deleteRelease,
@@ -21,7 +21,6 @@ import {
   submitContact,
   updateContactStatus,
 } from "./content";
-import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
 
 const safeHttpsUrl = z
@@ -73,7 +72,6 @@ const requiredReleaseChecks = [
   "artwork",
   "links",
 ] as const;
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 const releaseSchema = z.object({
   id: z.number().int().positive().optional(),
   artistId: z.number().int().positive(),
@@ -371,65 +369,6 @@ const adminRouter = router({
 export const appRouter = router({
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
-    adminLogin: publicProcedure
-      .input(
-        z.object({
-          username: z.string().trim().min(1).max(100),
-          password: z.string().min(1).max(200),
-        })
-      )
-      .mutation(async ({ input, ctx }) => {
-        const configuredUsername = ENV.adminUsername;
-        const configuredPassword = ENV.adminPassword;
-        const same = (left: string, right: string) => {
-          const a = Buffer.from(left);
-          const b = Buffer.from(right);
-          return a.length === b.length && timingSafeEqual(a, b);
-        };
-        const now = Date.now();
-        const attemptKey = createHash("sha256")
-          .update(`${ctx.req.ip || "unknown"}:${input.username.toLowerCase()}`)
-          .digest("hex");
-        const attempts = loginAttempts.get(attemptKey);
-        if (attempts && attempts.resetAt > now && attempts.count >= 8)
-          throw new TRPCError({
-            code: "TOO_MANY_REQUESTS",
-            message:
-              "Too many sign-in attempts. Wait a few minutes and try again.",
-          });
-        if (
-          !configuredUsername ||
-          !configuredPassword ||
-          !same(input.username, configuredUsername) ||
-          !same(input.password, configuredPassword)
-        ) {
-          const current =
-            attempts && attempts.resetAt > now
-              ? attempts
-              : { count: 0, resetAt: now + 5 * 60_000 };
-          current.count += 1;
-          loginAttempts.set(attemptKey, current);
-          if (loginAttempts.size > 1000) {
-            for (const [key, record] of loginAttempts)
-              if (record.resetAt <= now) loginAttempts.delete(key);
-          }
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "Invalid administrator credentials.",
-          });
-        }
-        loginAttempts.delete(attemptKey);
-        const openId = `montyx-admin:${createHash("sha256").update(configuredUsername).digest("hex").slice(0, 48)}`;
-        // Password authentication must remain available even when the optional
-        // content database is not configured. The session is self-contained;
-        // admin content operations will report a clear storage error if needed.
-        const token = await sdk.createSessionToken(openId, {
-          name: "Montyx Administrator",
-          expiresInMs: 12 * 60 * 60 * 1000,
-        });
-        ctx.res.cookie(COOKIE_NAME, token, getSessionCookieOptions(ctx.req));
-        return { success: true } as const;
-      }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

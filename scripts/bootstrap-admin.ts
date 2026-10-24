@@ -37,7 +37,7 @@ async function main() {
         .where(eq(users.role, "user"));
       if (!accounts.length)
         throw new Error(
-          "No signed-in account exists. Sign in at /admin once, then run the bootstrap command again."
+          "No authenticated account exists in the database. Sign in through the configured identity provider, then run the bootstrap command again."
         );
       console.log("Existing authenticated accounts:");
       accounts.forEach((account, index) =>
@@ -83,7 +83,7 @@ async function main() {
       .set({ role: "admin" })
       .where(eq(users.id, account.id));
     console.log(
-      "First administrator granted to the selected existing OAuth account. Refresh /admin to continue."
+      "Admin role granted to the selected existing OAuth account. No public administrator sign-in page is provided."
     );
   } finally {
     const client = (

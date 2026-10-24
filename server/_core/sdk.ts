@@ -294,20 +294,9 @@ class SDKServer {
     const sessionUserId = session.openId;
     const signedInAt = new Date();
 
-    // The private label administrator is authenticated by the signed JWT and
-    // must not depend on the optional content database just to open the panel.
+    // Reject sessions issued by the retired public administrator password login.
     if (sessionUserId.startsWith("montyx-admin:")) {
-      return {
-        id: -1,
-        openId: sessionUserId,
-        name: session.name || "Montyx Administrator",
-        email: null,
-        loginMethod: "admin-password",
-        role: "admin",
-        createdAt: signedInAt,
-        updatedAt: signedInAt,
-        lastSignedIn: signedInAt,
-      } as AuthenticatedUser;
+      throw ForbiddenError("Password-based administrator sessions are disabled");
     }
 
     let user = await db.getUserByOpenId(sessionUserId);

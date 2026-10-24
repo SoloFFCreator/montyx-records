@@ -56,6 +56,14 @@ describe("Vercel serverless application", () => {
     expect(page.html).not.toContain("/releases");
   });
 
+  it("removes the former public administrator sign-in page", async () => {
+    const page = await renderSeoDocument(template, "/admin");
+    expect(page.status).toBe(404);
+    expect(page.html).not.toContain("Admin access");
+    expect(page.html).not.toContain("administrator password");
+    expect(page.html).toContain('<meta name="robots" content="noindex,nofollow" />');
+  });
+
   it("keeps unrecognized paths as genuine, non-indexable 404 pages", async () => {
     const page = await renderSeoDocument(template, "/no-such-page");
     expect(page.status).toBe(404);
@@ -77,6 +85,6 @@ describe("Vercel serverless application", () => {
       expect(sitemap).toContain("https://montyxlabel.cyou/rights");
       expect(sitemap).not.toContain("/releases");
       expect(sitemap).not.toContain("/admin");
-    });
+      });
   });
 });

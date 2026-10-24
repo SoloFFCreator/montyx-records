@@ -3,7 +3,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Redirect, Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { SiteFrame } from "@/components/SiteLayout";
-import Admin from "./pages/Admin";
 import Contact from "./pages/Contact";
 import Home from "./pages/Home";
 import Legal from "./pages/Legal";
@@ -16,7 +15,6 @@ function Public({ children }: { children: React.ReactNode }) {
 function Router() {
   return (
     <Switch>
-      <Route path="/admin" component={Admin} />
       <Route
         path="/"
         component={() => (
