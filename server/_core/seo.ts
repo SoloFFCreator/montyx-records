@@ -36,13 +36,13 @@ const staticPages: Record<
     title: "Contact MONTYX RECORDS Distribution",
     description:
       "Contact MONTYX RECORDS about music distribution, release questions, rights or general enquiries.",
-    body: "Contact MONTYX RECORDS for distribution, artist, rights or general enquiries. Contact form messages are stored for authorized label administrators; email forwarding is not configured.",
+    body: "Contact MONTYX RECORDS for distribution, artist, rights or general enquiries. Messages are stored privately first, then sent to support@montyxlabel.cyou when the configured email provider accepts them. If delivery is unavailable, use the direct email draft.",
   },
   "/privacy": {
     title: "Privacy Policy — MONTYX RECORDS",
     description:
       "Privacy information for the MONTYX RECORDS website and contact form.",
-    body: "Contact submissions include a name, email address, subject and message. They are used to review enquiries and are visible only to authorized label administrators.",
+    body: "Contact submissions include a name, email address, subject and message. They are stored privately and sent through Resend to support@montyxlabel.cyou only when server-side email delivery is configured. The public website has no message-management panel.",
   },
   "/terms": {
     title: "Terms — MONTYX RECORDS",
@@ -96,9 +96,7 @@ export async function renderSeoDocument(template: string, rawUrl: string) {
     image
       ? `<meta property="og:image" content="${escapeHtml(image)}" /><meta name="twitter:image" content="${escapeHtml(image)}" />`
       : "",
-    status === 404
-      ? `<meta name="robots" content="noindex,nofollow" />`
-      : "",
+    status === 404 ? `<meta name="robots" content="noindex,nofollow" />` : "",
   ]
     .filter(Boolean)
     .join("\n    ");

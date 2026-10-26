@@ -3,136 +3,16 @@ import { createHash } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
-import { adminProcedure, publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, router } from "./_core/trpc";
 import { ENV } from "./_core/env";
-import { upsertUser } from "./db";
+import { sendContactEmail } from "./contactEmail";
 import {
-  deleteRelease,
   getPublicArtist,
   getPublicRelease,
-  listAdminArtists,
-  listAdminReleases,
-  listContactRequests,
   listPublicReleases,
   readSettings,
-  saveArtist,
-  saveRelease,
-  saveSettings,
   submitContact,
-  updateContactStatus,
 } from "./content";
-import { storagePut } from "./storage";
-
-const safeHttpsUrl = z
-  .string()
-  .trim()
-  .url()
-  .max(1024)
-  .refine(value => new URL(value).protocol === "https:", "Use an HTTPS URL");
-const artworkUrl = z
-  .string()
-  .max(1024)
-  .refine(
-    value =>
-      !value ||
-      (() => {
-        try {
-          return new URL(value).protocol === "https:";
-        } catch {
-          return false;
-        }
-      })(),
-    "Use an HTTPS or managed-storage artwork URL"
-  );
-const linkSchema = z.object({
-  platform: z.string().trim().max(80),
-  url: safeHttpsUrl,
-  isPublic: z.boolean().default(false),
-});
-const siteSettingsSchema = z
-  .object({
-    labelName: z.string().trim().min(1).max(80).optional(),
-    labelIntro: z.string().max(1200).optional(),
-    contactEmail: z
-      .union([z.literal(""), z.string().trim().email().max(320)])
-      .optional(),
-    instagramUrl: z.union([z.literal(""), safeHttpsUrl]).optional(),
-    youtubeUrl: z.union([z.literal(""), safeHttpsUrl]).optional(),
-    soundcloudUrl: z.union([z.literal(""), safeHttpsUrl]).optional(),
-    tiktokUrl: z.union([z.literal(""), safeHttpsUrl]).optional(),
-    spotifyUrl: z.union([z.literal(""), safeHttpsUrl]).optional(),
-    homeHeadline: z.string().trim().min(1).max(120).optional(),
-    homeSubhead: z.string().max(500).optional(),
-  })
-  .strict();
-const requiredReleaseChecks = [
-  "rights",
-  "metadata",
-  "distribution",
-  "artwork",
-  "links",
-] as const;
-const releaseSchema = z.object({
-  id: z.number().int().positive().optional(),
-  artistId: z.number().int().positive(),
-  slug: z
-    .string()
-    .trim()
-    .min(1)
-    .max(180)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  title: z.string().trim().min(1).max(200),
-  releaseType: z.enum(["single", "ep", "album"]),
-  releaseDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .nullable(),
-  genres: z.array(z.string().trim().min(1).max(80)).max(12),
-  description: z.string().max(5000),
-  coverUrl: artworkUrl,
-  coverKey: z.string().max(512),
-  publicationStatus: z.enum(["draft", "published"]),
-  distributionStatus: z.enum(["pending", "scheduled", "live", "taken_down"]),
-  featured: z.boolean(),
-  isrc: z.string().max(32),
-  upcEan: z.string().max(32),
-  distributorName: z.string().max(200),
-  releaseChecklist: z
-    .array(z.enum(requiredReleaseChecks))
-    .max(requiredReleaseChecks.length)
-    .default([]),
-  deliveryReference: z.string().max(500),
-  labelCredit: z.string().max(200),
-  masterOwnershipNotes: z.string().max(5000),
-  internalNotes: z.string().max(10000),
-  audioMasterKey: z.string().max(512),
-  officialVideoUrl: z.union([safeHttpsUrl, z.literal("")]),
-  links: z.array(linkSchema).max(20),
-});
-const artistSchema = z.object({
-  id: z.number().int().positive().optional(),
-  name: z.string().trim().min(1).max(160),
-  slug: z
-    .string()
-    .trim()
-    .min(1)
-    .max(180)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  biography: z.string().max(5000),
-  genres: z.array(z.string().trim().min(1).max(80)).max(12),
-  photoUrl: z.union([safeHttpsUrl, z.literal("")]),
-  isPublic: z.boolean(),
-  links: z
-    .array(
-      z.object({
-        platform: z.string().trim().max(80),
-        kind: z.enum(["streaming", "social", "video", "other"]),
-        url: safeHttpsUrl,
-        isPublic: z.boolean(),
-      })
-    )
-    .max(30),
-});
 
 const contentRouter = router({
   home: publicProcedure.query(async () => {
@@ -210,7 +90,11 @@ const contentRouter = router({
           message: input.message,
           ipHash,
         });
-        return { stored: true, emailDeliveryConfigured: false };
+        const emailDeliveryConfigured = Boolean(
+          process.env.RESEND_API_KEY?.trim()
+        );
+        const emailDelivered = await sendContactEmail(input);
+        return { stored: true, emailDeliveryConfigured, emailDelivered };
       } catch (error) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -220,149 +104,6 @@ const contentRouter = router({
               : "We could not save this message. Please try again.",
         });
       }
-    }),
-});
-
-const adminRouter = router({
-  overview: adminProcedure.query(async () => {
-    const [releases, artists, settings, messages] = await Promise.all([
-      listAdminReleases(),
-      listAdminArtists(),
-      readSettings(),
-      listContactRequests(),
-    ]);
-    return { releases, artists, settings, messages };
-  }),
-  saveRelease: adminProcedure
-    .input(releaseSchema)
-    .mutation(async ({ input }) => {
-      if (input.publicationStatus === "published") {
-        const acknowledged = new Set(input.releaseChecklist);
-        if (requiredReleaseChecks.some(item => !acknowledged.has(item)))
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message:
-              "Complete the internal release verification checklist before publishing.",
-          });
-        if (
-          !input.releaseDate ||
-          !input.coverUrl.trim() ||
-          !input.labelCredit.trim()
-        )
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message:
-              "A published release needs a verified release date, approved artwork, and confirmed label credit.",
-          });
-        if (
-          input.coverKey &&
-          !/^artwork\/[a-f0-9-]{20,80}\.(?:jpg|png|webp)$/i.test(input.coverKey)
-        )
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "The artwork storage reference is invalid.",
-          });
-        if (
-          input.distributionStatus !== "pending" &&
-          !input.distributorName.trim()
-        )
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message:
-              "Enter the actual distributor before publishing a scheduled, live, or taken-down release.",
-          });
-      }
-      try {
-        return { id: await saveRelease(input) };
-      } catch (error) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Release could not be saved.",
-        });
-      }
-    }),
-  deleteRelease: adminProcedure
-    .input(z.object({ id: z.number().int().positive() }))
-    .mutation(async ({ input }) => {
-      await deleteRelease(input.id);
-      return { success: true };
-    }),
-  saveArtist: adminProcedure.input(artistSchema).mutation(async ({ input }) => {
-    try {
-      return { id: await saveArtist(input) };
-    } catch (error) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message:
-          error instanceof Error ? error.message : "Artist could not be saved.",
-      });
-    }
-  }),
-  saveSettings: adminProcedure
-    .input(siteSettingsSchema)
-    .mutation(async ({ input }) => {
-      await saveSettings(
-        Object.fromEntries(
-          Object.entries(input).filter(
-            (entry): entry is [string, string] => typeof entry[1] === "string"
-          )
-        )
-      );
-      return { success: true };
-    }),
-  uploadArtwork: adminProcedure
-    .input(
-      z.object({
-        fileName: z.string().max(180),
-        contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
-        dataBase64: z.string().min(1).max(4_200_000),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const bytes = Buffer.from(input.dataBase64, "base64");
-      if (!bytes.length || bytes.length > 5 * 1024 * 1024)
-        throw new TRPCError({
-          code: "PAYLOAD_TOO_LARGE",
-          message: "Artwork must be 5 MB or smaller.",
-        });
-      const valid =
-        input.contentType === "image/png"
-          ? bytes
-              .subarray(0, 8)
-              .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
-          : input.contentType === "image/jpeg"
-            ? bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255
-            : bytes.subarray(0, 4).toString() === "RIFF" &&
-              bytes.subarray(8, 12).toString() === "WEBP";
-      if (!valid)
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "The image file does not match its declared format.",
-        });
-      const ext =
-        input.contentType === "image/jpeg"
-          ? "jpg"
-          : input.contentType.split("/")[1];
-      const uploaded = await storagePut(
-        `montyx/artwork/${Date.now()}-${crypto.randomUUID()}.${ext}`,
-        bytes,
-        input.contentType
-      );
-      return { url: uploaded.url, key: uploaded.key };
-    }),
-  updateContactStatus: adminProcedure
-    .input(
-      z.object({
-        id: z.number().int().positive(),
-        status: z.enum(["new", "in_review", "resolved"]),
-      })
-    )
-    .mutation(async ({ input }) => {
-      await updateContactStatus(input.id, input.status);
-      return { success: true };
     }),
 });
 
@@ -376,7 +117,6 @@ export const appRouter = router({
     }),
   }),
   content: contentRouter,
-  admin: adminRouter,
 });
 
 export type AppRouter = typeof appRouter;

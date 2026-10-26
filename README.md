@@ -6,7 +6,7 @@ The hero pairs custom 16:9 artwork with an optional Three.js scene using React T
 
 ## Development and deployment
 
-Use pnpm 10.18.0 and Node 22 or newer. Run `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm test`, and `pnpm build`. `pnpm dev` starts the local Express/Vite application; Vercel functions import only `server/_core/app.ts`, never the Vite development server. The Vite build publishes `dist/public`; `vercel.json` serves route-specific SEO HTML through `/api/page`, keeps sitemap and robots files available, and redirects the retired `/releases`, `/artists/:slug`, and `/about` URLs into the relevant landing sections. The contact, privacy, terms, and rights routes remain available; there is no public administrator route.
+Use pnpm 10.18.0 and Node 22 or newer. Run `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm test`, and `pnpm build`. `pnpm dev` starts the local Express/Vite application; Vercel never starts the Vite development server. The Vite build publishes `dist/public`; small standalone Vercel functions serve health, page-specific SEO HTML, sitemap, public social settings, and contact submissions, while the legacy Express/tRPC adapter remains separate. `vercel.json` redirects retired `/releases`, `/artists/:slug`, and `/about` routes into relevant landing sections. The contact, privacy, terms, and rights routes remain available; there is no public administrator route.
 
 Set server-only Vercel environment variables for `POSTGRES_URL` (or `DATABASE_URL`), `SUPABASE_URL`, and `SUPABASE_SECRET_KEY` (or the legacy `SUPABASE_SERVICE_ROLE_KEY`). Keep service credentials private; never use them in client variables. Set `MONTYX_SESSION_SECRET` (a unique random secret of at least 32 bytes) and `PUBLIC_SITE_URL=https://montyxlabel.cyou`. The signing secret is used only server-side. If it is not set, the app accepts a Supabase/Manus server-only signing key as a fallback; prefer the dedicated key. The public site no longer provides an administrator password-login page or password-login API. Redeploy after changing environment variables.
 
@@ -16,29 +16,27 @@ The app uses Supabase PostgreSQL through Drizzle. The `drizzle/schema.ts` file i
 
 Private cover images go to the non-public `montyx-artwork` Supabase Storage bucket. The server creates the bucket on the first authorized upload if needed, with JPEG/PNG/WebP and a 3 MB limit. Public artwork is served through a stable application endpoint only after a release referencing its object key has been published. Draft files remain private; never upload unreleased audio masters to this artwork bucket.
 
-## Release administration
+## Existing Supabase records
 
-The public site no longer exposes an administrator sign-in page or password-login API. Management operations remain protected by server-side authorization and are not available to public visitors. Keep the session signing key high-entropy and server-only.
-
-Create or edit a release and keep it as a draft while checking title, artist, date, ISRC, UPC/EAN, actual distributor, exact label credit, ownership notes, approved artwork, and destinations against authoritative source records. The seeded `MONTAGEM DA SEDUÇÃO` entry is draft-only and contains ISRC `NL9KR2145620` and UPC/EAN `8721667789184`; these identifiers and all internal delivery/ownership notes remain private. Artists retain master ownership unless a separate written agreement says otherwise. Do not claim a distributor, release status, streaming URL, partnership, certification, statistic, or achievement that has not been verified.
-
-The five internal publication attestations (rights, metadata, distribution, artwork, and public-link verification) are submitted with the release and checked again on the server. Publishing requires all five, a date, cover art and a label credit; a non-pending status also requires the actual distributor. Public API results are explicit allowlists and omit ISRC, UPC/EAN, delivery references, internal notes, master-ownership notes, audio keys and checklist details. The public marketing page’s representative service marks are not a release-by-release delivery confirmation. This web application does not ingest or deliver audio to Spotify, Apple Music, YouTube, TikTok, or other services; confirm actual delivery terms and destinations directly with MONTYX before proceeding.
+At the owner's request, the public administrator page, password login and all application-level release, artist, settings, artwork-upload and message-management APIs have been removed. No content-management interface is available. Existing Supabase records and storage objects are preserved; no records were deleted. Authorized project owners may manage infrastructure directly through Supabase, but the website does not expose those private fields or operations. Artists retain master ownership unless a separate written agreement states otherwise. The public service marks are examples, not per-release delivery confirmations; this website does not ingest or deliver audio to streaming services.
 
 ## Contact and privacy
 
-The contact form validates submissions and stores them in the private Supabase inbox. It does not send email; visitors may reach the label directly at `support@montyxlabel.cyou`. The UI must not claim form messages were emailed. The admin inbox supports status updates. Contact messages contain personal data: retain them only as long as operationally needed and restrict access to authorized administrators.
+The contact form validates submissions and saves them to the private Supabase database. When the Resend service is configured, it sends a plain-text notification to `support@montyxlabel.cyou`; the provider must accept the message before the page says it was emailed. If the provider is missing or rejects the request, the saved message remains and the form offers a prefilled mail-app draft. Configure `RESEND_API_KEY` as a sensitive, server-only Vercel production environment variable. The default sender is `support@montyxlabel.cyou`; if Resend requires a different verified sender, configure `RESEND_FROM_EMAIL` with an address on a verified sending domain. See [Resend's send-email API](https://resend.com/docs/api-reference/emails/send-email). Contact messages contain personal data and may be transmitted to Resend for notification; review the privacy notice and retain messages only as long as operationally needed.
 
 Privacy, Terms, and Rights/Takedown content are editable website-use drafts, not legal advice or claims of regulatory compliance. Review them against the label's actual practices and applicable law before relying on them as legal documents.
 
 ## Environment variable reference
 
-| Variable | Purpose | Public? |
-| --- | --- | --- |
-| `POSTGRES_URL` or `DATABASE_URL` | Supabase PostgreSQL connection string | No |
-| `SUPABASE_URL` | Supabase project API endpoint | Server only in this application |
-| `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` | Server-side private Storage access | No; never expose to browsers |
-| `MONTYX_SESSION_SECRET` | High-entropy cookie/session signing key | No |
-| `PUBLIC_SITE_URL` | Canonical HTTPS origin for sitemap and metadata | Yes, non-secret; server configured |
-| `PORT` | Local/managed server port | Runtime-provided |
+| Variable                                             | Purpose                                                 | Public?                              |
+| ---------------------------------------------------- | ------------------------------------------------------- | ------------------------------------ |
+| `POSTGRES_URL` or `DATABASE_URL`                     | Supabase PostgreSQL connection string                   | No                                   |
+| `SUPABASE_URL`                                       | Supabase project API endpoint                           | Server only in this application      |
+| `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` | Server-side private Storage access                      | No; never expose to browsers         |
+| `MONTYX_SESSION_SECRET`                              | High-entropy cookie/session signing key                 | No                                   |
+| `PUBLIC_SITE_URL`                                    | Canonical HTTPS origin for sitemap and metadata         | Yes, non-secret; server configured   |
+| `RESEND_API_KEY`                                     | Server-only Resend credential for contact notifications | No; configure as sensitive in Vercel |
+| `RESEND_FROM_EMAIL`                                  | Optional sender address on a verified Resend domain     | Server only; not a secret            |
+| `PORT`                                               | Local/managed server port                               | Runtime-provided                     |
 
 After a code push, verify Vercel's build and deployment events, then test `/`, `/contact`, `/privacy`, `/terms`, `/rights`, `/api/health`, `/api/trpc/content.home`, `/robots.txt`, `/sitemap.xml`, and the legacy redirects on both the Vercel deployment URL and intended custom domain. Check that `GET /manus-routes.json` returns the route manifest JSON. A GitHub push by itself does not prove that a production deployment succeeded.

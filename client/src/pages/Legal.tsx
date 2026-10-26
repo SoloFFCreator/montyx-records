@@ -21,15 +21,15 @@ const copy: Record<
       ],
       [
         "How we use it",
-        "Contact details are used to review and respond to the enquiry and to protect the form against repeated automated submissions. Contact submissions are visible only to authorized label administrators.",
+        "Contact details are used to review and respond to enquiries and protect the form from repeated automated submissions. When Resend delivery is configured, the name, reply email, subject and message are sent through Resend to support@montyxlabel.cyou. The public website has no message-management panel.",
       ],
       [
         "Retention and deletion",
-        "Messages are retained until they are no longer needed for the enquiry or legitimate record-keeping. To request access, correction or deletion, use the contact form and identify the message you sent. Deletion requests are reviewed by an authorized administrator.",
+        "Messages are retained until they are no longer needed for the enquiry or record-keeping. To request access, correction or deletion, email support@montyxlabel.cyou and identify the message you sent. Requests are handled by the label owner.",
       ],
       [
         "Services and changes",
-        "The website’s hosting, authentication and managed database may process technical data to provide the service. This draft policy does not assert legal compliance that has not been verified. It may be updated as the site’s services and applicable requirements are reviewed.",
+        "The website’s Vercel hosting, private Supabase database and, when email notifications are enabled, Resend may process data to provide the service. This draft policy does not assert legal compliance that has not been verified. It may be updated as the site’s services and applicable requirements are reviewed.",
       ],
     ],
   },
@@ -69,7 +69,7 @@ const copy: Record<
       ],
       [
         "Distribution and promotion",
-        "MONTYX RECORDS respects artists’ master ownership and only distributes or promotes recordings under the rights and permissions it has obtained. A release is not represented as live or distributed until its status has been confirmed by an authorized administrator.",
+        "MONTYX RECORDS respects artists’ master ownership and only distributes or promotes recordings under the rights and permissions it has obtained. A release is not represented as live or distributed until its status has been verified from the actual distributor.",
       ],
       [
         "Rights enquiries and takedowns",

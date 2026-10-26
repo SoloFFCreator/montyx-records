@@ -10,7 +10,6 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
-    "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",
     "dev:static": "vite --host 0.0.0.0 --port ${PORT:-3000} --strictPort",
     "build:static": "vite build"
   },

@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp } from "./_core/app";
 import { renderSeoDocument } from "./_core/seo";
+import { appRouter } from "./routers";
 
 afterEach(() => {
   delete process.env.VERCEL;
@@ -29,6 +30,12 @@ const template =
   '<!doctype html><html><head><title>Base</title><!-- SEO_META --></head><body><!-- SEO_FALLBACK --><div id="root"></div></body></html>';
 
 describe("Vercel serverless application", () => {
+  it("does not mount any administrator login or management namespace", () => {
+    const root = appRouter._def.record;
+    expect(Object.keys(root)).toEqual(["auth", "content"]);
+    expect(Object.keys(root.auth)).toEqual(["me", "logout"]);
+  });
+
   it("boots the API without the Vite development server and serves health", async () => {
     process.env.VERCEL = "1";
     await withServer(async origin => {
@@ -61,7 +68,9 @@ describe("Vercel serverless application", () => {
     expect(page.status).toBe(404);
     expect(page.html).not.toContain("Admin access");
     expect(page.html).not.toContain("administrator password");
-    expect(page.html).toContain('<meta name="robots" content="noindex,nofollow" />');
+    expect(page.html).toContain(
+      '<meta name="robots" content="noindex,nofollow" />'
+    );
   });
 
   it("keeps unrecognized paths as genuine, non-indexable 404 pages", async () => {
@@ -85,6 +94,6 @@ describe("Vercel serverless application", () => {
       expect(sitemap).toContain("https://montyxlabel.cyou/rights");
       expect(sitemap).not.toContain("/releases");
       expect(sitemap).not.toContain("/admin");
-      });
+    });
   });
 });

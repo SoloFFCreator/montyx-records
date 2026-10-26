@@ -1,10 +1,11 @@
 import { useState, type FormEvent } from "react";
-import { trpc } from "@/lib/trpc";
 import { PageIntro, usePageMeta } from "@/components/SiteLayout";
 
 export default function Contact() {
-  const mutation = trpc.content.contact.useMutation();
+  const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [emailConfigured, setEmailConfigured] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [error, setError] = useState("");
   usePageMeta(
     "Contact MONTYX RECORDS Distribution",
@@ -14,16 +15,36 @@ export default function Contact() {
     event.preventDefault();
     setError("");
     setSent(false);
-    const form = new FormData(event.currentTarget);
+    setEmailConfigured(false);
+    setEmailSent(false);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    setPending(true);
     try {
-      await mutation.mutateAsync({
-        name: String(form.get("name")),
-        email: String(form.get("email")),
-        subject: String(form.get("subject")),
-        message: String(form.get("message")),
-        company: String(form.get("company") || ""),
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: String(form.get("name")),
+          email: String(form.get("email")),
+          subject: String(form.get("subject")),
+          message: String(form.get("message")),
+          company: String(form.get("company") || ""),
+        }),
       });
-      event.currentTarget.reset();
+      const result = (await response.json()) as {
+        stored?: boolean;
+        emailDeliveryConfigured?: boolean;
+        emailDelivered?: boolean;
+        message?: string;
+      };
+      if (!response.ok || result.stored !== true)
+        throw new Error(
+          result.message || "We couldn’t save your message. Please try again."
+        );
+      formElement.reset();
+      setEmailConfigured(Boolean(result.emailDeliveryConfigured));
+      setEmailSent(Boolean(result.emailDelivered));
       setSent(true);
     } catch (reason) {
       setError(
@@ -31,7 +52,22 @@ export default function Contact() {
           ? reason.message
           : "We couldn’t save your message. Please try again."
       );
+    } finally {
+      setPending(false);
     }
+  }
+  function openEmailDraft(formElement: HTMLFormElement | null) {
+    if (!formElement || !formElement.reportValidity()) return;
+    const form = new FormData(formElement);
+    const subject = String(form.get("subject") || "MONTYX RECORDS enquiry");
+    const body = [
+      `Name: ${String(form.get("name") || "")}`,
+      `Reply email: ${String(form.get("email") || "")}`,
+      "",
+      String(form.get("message") || ""),
+    ].join("\n");
+    const query = new URLSearchParams({ subject, body });
+    window.location.href = `mailto:support@montyxlabel.cyou?${query.toString()}`;
   }
   return (
     <main>
@@ -45,9 +81,9 @@ export default function Contact() {
           <span className="eyebrow red">MONTYX RECORDS · NEPAL</span>
           <h2>Good work starts with a clear conversation.</h2>
           <p>
-            Use the form for a direct message. Submissions are stored securely
-            for the label team; email notifications are not currently
-            configured.
+            Your message is saved first. When server email delivery is
+            unavailable, use the email-draft button to contact the label from
+            your mail app.
           </p>
           <div className="contact-address">
             <span className="eyebrow">SUPPORT EMAIL</span>
@@ -92,9 +128,12 @@ export default function Contact() {
           </label>
           {sent && (
             <div className="notice notice-success" role="status">
-              <b>Message saved.</b> It is in the label’s private inbox. Email
-              forwarding is not configured, so this does not mean an email was
-              sent.
+              <b>{emailSent ? "Message emailed." : "Message saved only."}</b>{" "}
+              {emailSent
+                ? "The contact service accepted the email for delivery."
+                : emailConfigured
+                  ? "The email provider did not accept it. Use the email draft below to contact support."
+                  : "Automatic email is not configured; it was not sent to support. Use the email draft below."}
             </div>
           )}
           {error && (
@@ -102,15 +141,19 @@ export default function Contact() {
               {error}
             </div>
           )}
+          <button className="button button-primary" disabled={pending}>
+            {pending ? "Saving…" : "Send message"} <span>↗</span>
+          </button>
           <button
-            className="button button-primary"
-            disabled={mutation.isPending}
+            type="button"
+            className="button button-outline"
+            onClick={event => openEmailDraft(event.currentTarget.form)}
           >
-            {mutation.isPending ? "Saving…" : "Send message"} <span>↗</span>
+            Open email draft
           </button>
           <p className="form-note">
-            Please don’t include passwords, private contracts or unreleased
-            audio files.
+            The draft opens your mail app; review it and tap Send. Please don’t
+            include passwords, private contracts or unreleased audio files.
           </p>
         </form>
       </section>

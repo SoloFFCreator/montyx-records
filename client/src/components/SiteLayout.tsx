@@ -1,6 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { trpc } from "@/lib/trpc";
 
 export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
@@ -61,9 +60,24 @@ export function usePageMeta(title: string, description: string) {
 
 export function SiteFrame({ children }: { children: React.ReactNode }) {
   const [path] = useLocation();
-  const { data: settings } = trpc.content.settings.useQuery(undefined, {
-    staleTime: 60_000,
-  });
+  const [settings, setSettings] = useState<{
+    instagramUrl?: string;
+    youtubeUrl?: string;
+    soundcloudUrl?: string;
+    tiktokUrl?: string;
+  }>({});
+  useEffect(() => {
+    let active = true;
+    fetch("/api/settings")
+      .then(response => (response.ok ? response.json() : null))
+      .then(value => {
+        if (active && value && typeof value === "object") setSettings(value);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
   const nav = [
     ["Destinations", "/#platforms"],
     ["How it works", "/#process"],

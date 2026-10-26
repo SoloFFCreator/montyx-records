@@ -68,7 +68,7 @@ const questions = [
   {
     question: "How do I begin?",
     answer:
-      "Use the contact form to start a conversation. It stores your message in the label’s private inbox; email forwarding is not currently configured. Please do not attach unreleased audio or private contracts.",
+      "Use the contact form to start a conversation. It saves the message and sends a support email when automatic delivery is available; otherwise, use the prefilled email draft. Please do not attach unreleased audio or private contracts.",
   },
   {
     question: "Are the platform marks endorsements?",
